@@ -1,0 +1,62 @@
+<!--
+  ~ Copyright (c) 2013. Telecom ParisTech/TSI/MM/GPAC Jean-Claude Dufourd
+  ~ This code was developed with the Coltram project, funded by the French ANR.
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Lesser General Public License for more details.
+  ~
+  ~ This notice must stay in all subsequent versions of this code.
+  -->
+<html>
+<head>
+    <title>Discovery</title>
+    <script language="javascript" type="text/javascript" src="jslib/nsdLib.js"></script>
+    <script language="javascript" type="text/javascript" src="bootstrap/js/jquery-1.8.2.min.js"></script>
+    <script language="javascript" type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
+    <script language="javascript" type="text/javascript" src="js/discovery.js"></script>
+    <style>
+        .label {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero-unit">
+        <h1>Discovery</h1>
+    </div>
+    <h3>Service type:
+        <input size="80" value="" id="servicetype" placeholder="service type..."/>
+        <input type="button" id="get" onclick="getThisType()" value="Get" class="btn btn-primary"/>
+        <input type="button" id="get2" onclick="getThisTypeLoose()" value="Get*" class="btn btn-warning"/></h3>
+    <br/>
+    <p>
+        The blue button Get button uses NSD.getNetworkServices and requires the service type field to be an
+        exact match to the service type, including the upnp: or zeroconf: prefix.
+    </p>
+    <p>
+        The orange button Get* button uses an extension NSDPlusPlus.discover which matches a substring of the
+        service type. If you leave the service type empty, you get all discoverable services, whether UPnP or Bonjour.
+    </p>
+    <br/>
+    <h3>Service Table:</h3>
+    <div class="row" id="servicetable"></div>
+    <br/>
+    <br/>
+    <h4>Debug:</h4>
+    <div class="row">
+        <div class="span12">
+            <textarea id="ta" cols="100" rows="10" style="width: 100%;"></textarea>
+        </div>
+    </div>
+</div>
+</body>
+</html>

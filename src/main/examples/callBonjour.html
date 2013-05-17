@@ -1,0 +1,54 @@
+<!--
+  ~ Copyright (c) 2013. Telecom ParisTech/TSI/MM/GPAC Jean-Claude Dufourd
+  ~ This code was developed with the Coltram project, funded by the French ANR.
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Lesser General Public License for more details.
+  ~
+  ~ This notice must stay in all subsequent versions of this code.
+  -->
+<html>
+<head>
+    <title>Call Bonjour Service</title>
+    <script language="javascript" type="text/javascript" src="jslib/nsdLib.js"></script>
+    <script language="javascript" type="text/javascript" src="bootstrap/js/jquery-1.8.2.min.js"></script>
+    <script language="javascript" type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
+    <script language="javascript" type="text/javascript" src="js/callBonjour.js"></script>
+    <style>
+        .label {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero-unit">
+        <h1>Call Bonjour Service</h1>
+    </div>
+    <div class="row">
+        <div class="span3">
+            <input type="button" id="get" onclick="switchOn()" value="Switch On" class="btn btn-primary"/>
+        </div>
+        <div class="span3">
+            <input type="button" id="get2" onclick="switchOff()" value="Switch Off" class="btn btn-primary"/>
+        </div>
+    </div>
+    <br/>
+    <br/>
+    <h4>Debug:</h4>
+    <div class="row">
+        <div class="span12">
+            <textarea id="ta" cols="100" rows="10" style="width: 100%;"></textarea>
+        </div>
+    </div>
+</div>
+</body>
+</html>
