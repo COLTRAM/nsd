@@ -116,7 +116,7 @@ var NSDPlusPlus = {};
     NSDPlusPlus.connect = function (host) {
         NSDPlusPlus.logger("connecting to " + host);
         try {
-            conn = new WebSocket(host == null ? "ws://localhost:57005/" : "ws://" + host + ":57005/");
+            conn = new WebSocket(host == null ? "ws://localhost:56797/" : "ws://" + host + ":56797/");
         } catch (e) {
             NSDPlusPlus.logger("error creating WebSocket " + e);
             NSDPlusPlus.logger("cannot continue...");

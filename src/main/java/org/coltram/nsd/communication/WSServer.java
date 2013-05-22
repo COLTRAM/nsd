@@ -35,7 +35,7 @@ public class WSServer extends WebSocketServer {
     private ProxyMessenger proxyMessenger;
 
     public WSServer() {
-        super(new InetSocketAddress(0xDEAD));
+        super(new InetSocketAddress(0xDDDD));
         GeneralManager GeneralManager = new GeneralManager();
         connectionManager = GeneralManager.getConnectionManager();
         proxyMessenger = new ProxyMessenger(GeneralManager);

@@ -20,7 +20,7 @@ public class GeneralManager {
     private final ArrayList<ZCService> services;
 
     private static final String webrootName = "tmpwww";
-    private final static String webrootPort = "55005";
+    private final static String webrootPort = "50005";
     private static String localhost = null;
 
     public GeneralManager() {
