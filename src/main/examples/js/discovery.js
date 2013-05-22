@@ -24,12 +24,14 @@ NSDPlusPlus.logger = function (s) {
 
 function getThisTypeLoose() {
     serviceType = document.getElementById("servicetype").value;
-    NSDPlusPlus.discover(serviceType, CB);
+    NSDPlusPlus.discover(serviceType, CB1);
+    NSDPlusPlus.logger("in getThisTypeLoose, called discover with "+serviceType);
 }
 
 function getThisType() {
     serviceType = document.getElementById("servicetype").value;
-    NSD.getNetworkServices(serviceType, CB1);
+    NSD.getNetworkServices(serviceType, CB);
+    NSDPlusPlus.logger("in getThisType, called getNetworkServices with "+serviceType);
 }
 
 function CB(services) {
@@ -96,13 +98,15 @@ function empty(selector) {
 }
 
 function onserviceavailable() {
-    NSDPlusPlus.logger("onserviceavailable callback");
+    //NSDPlusPlus.logger("onserviceavailable callback");
     NSD.getNetworkServices(serviceType, CB);
+    NSDPlusPlus.logger("in onserviceavailable, called getNetworkServices with "+serviceType);
 }
 
 function onserviceavailable1() {
-    NSDPlusPlus.logger("onserviceavailable1 callback");
+    //NSDPlusPlus.logger("onserviceavailable1 callback");
     NSDPlusPlus.discover(serviceType, CB1);
+    NSDPlusPlus.logger("in onserviceavailable1, called discover with "+serviceType);
 }
 
 function connectedCB() {
