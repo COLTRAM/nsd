@@ -45,6 +45,9 @@ var NSDPlusPlus = {};
     };
 
     NSDPlusPlus.isDiscovered = function (service) {
+        if (service == null) {
+            throw "testing null service for past discovery";
+        }
         for (var i = 0; i < discoveredServices.length; i++) {
             if (discoveredServices[i].id == service.id) {
                 return true;
@@ -57,6 +60,9 @@ var NSDPlusPlus = {};
     // add NSD fields not present in Java
     //
     NSDPlusPlus.addDiscoveredService = function (serviceFromJava) {
+        if (serviceFromJava == null) {
+            throw "service received from agent is null";
+        }
         serviceFromJava.online = true;
         serviceFromJava.onserviceonline = null;
         serviceFromJava.onserviceoffline = null;
@@ -403,16 +409,14 @@ var NSDPlusPlus = {};
         if (typeof impl[obj.actionName] == 'function') {
             // prepare the arguments from the service action description, one arg per argument described as 'in'
             var args = [];
-            for (var i in impl.service.actionList) {
-                if (impl.service.actionList.hasOwnProperty(i)) {
-                    var action = impl.service.actionList[i];
-                    if (action.name == obj.actionName) {
-                        for (var j in action.args) {
-                            if (action.args.hasOwnProperty(j)) {
-                                var arg = action.args[j];
-                                if (arg.dir == "in") {
-                                    args.push(JSON.parse(args2[arg.name]));
-                                }
+            for (var i = 0; i < impl.service.actionList.length; i++) {
+                var action = impl.service.actionList[i];
+                if (action.name == obj.actionName) {
+                    for (var j in action.args) {
+                        if (action.args.hasOwnProperty(j)) {
+                            var arg = action.args[j];
+                            if (arg.dir.toLowerCase() == "in") {
+                                args.push(JSON.parse(args2[arg.name]));
                             }
                         }
                     }
@@ -798,11 +802,22 @@ NSD.getNetworkServices = NSDPlusPlus.getNetworkServices;
         }
     });
 
+    function removeSpecial(array, object) {
+        for (var i = 0; i < array.length; i++) {
+            if (array[i].id == object.id &&
+                    array[i].name == object.name &&
+                    array[i].type == object.type) {
+                array.splice(i, 1);
+                return;
+            }
+        }
+    }
+
     NSDPlusPlus.addMessageHandler("serviceRemoved", function (obj) {
         var i, removedServices = [];
         for (i = 0; i < obj.services.length; i++) {
             if (NSDPlusPlus.isDiscovered(obj.services[i])) {
-                discoveredServices.remove(obj.services[i]);
+                removeSpecial(discoveredServices, obj.services[i]);
                 removedServices.push(obj.services[i]);
             }
         }
