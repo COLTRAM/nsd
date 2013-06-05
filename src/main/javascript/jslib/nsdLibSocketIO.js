@@ -19,8 +19,7 @@
 var NSDPlusPlus = {};
 
 (function () {
-    var conn = null;
-    var manifest = null;
+    var socket = null;
     var eventValues = [];
     //noinspection UnnecessaryLocalVariableJS
     var discoveredServices = [];
@@ -119,16 +118,16 @@ var NSDPlusPlus = {};
     NSDPlusPlus.connect = function (host) {
         NSDPlusPlus.logger("connecting to " + host);
         try {
-            conn = new WebSocket(host == null ? "ws://localhost:56797/" : "ws://" + host + ":56797/");
+            socket = io.connect(host == null ? "http://localhost:57005/" : "http://" + host + ":57005/");
         } catch (e) {
             NSDPlusPlus.logger("error creating WebSocket " + e);
             NSDPlusPlus.logger("cannot continue...");
             return;
         }
-        conn.onopen = socketConnected;
-        conn.onmessage = msgHandler;
-        conn.onclose = socketClosed;
-        conn.onerror = errorFunction;
+        socket.on('connect', socketConnected);
+        socket.on('connect_failed', function() {NSDPlusPlus.logger("socket.io connection failed")});
+        socket.on('message', msgHandler);
+        socket.on('disconnect', socketClosed);
     };
 
     //
@@ -152,12 +151,11 @@ var NSDPlusPlus = {};
     function msgHandler(e) {
         var obj;
         try {
-            // obj = JSON.parse(e.data);
-            eval('obj = ' + e.data); // works better on long strings ?
-            //Coltram.logger(e.data);
+            // obj = JSON.parse(e);
+            eval('obj = ' + e); // works better on long strings ?
         } catch (error) {
             NSDPlusPlus.logger("+------+");
-            NSDPlusPlus.logger("|" + error + " " + e.data);
+            NSDPlusPlus.logger("|" + error + " " + e);
             NSDPlusPlus.logger("+------+");
         }
         // NSDPlusPlus.resetLog();
@@ -195,7 +193,7 @@ var NSDPlusPlus = {};
     //
     // expose a service
     //
-    Coltram.expose = function (type, protocol, serviceImplementation) {
+    NSDPlusPlus.expose = function (type, protocol, serviceImplementation) {
         if (arguments.length < 3) {
             throw "NSDPlusPlus.expose called with not enough parameters";
         }
@@ -206,25 +204,21 @@ var NSDPlusPlus = {};
         obj.localService.protocol = protocol;
         obj.localService.actionList = computeServiceDescriptionFromImplementation(serviceImplementation);
         obj.localService.eventList = null;
-        manifest.atom["interface"].eventList = null;
         if (serviceImplementation.EVENTS) {
             obj.localService.eventList = serviceImplementation.EVENTS;
-            manifest.atom["interface"].eventList = serviceImplementation.EVENTS;
             for (var i = 0; i < serviceImplementation.EVENTS.length; i++) {
                 eventValues[serviceImplementation.EVENTS[i]] = null;
             }
         }
-        manifest.atom["interface"].actionList = obj.localService.actionList;
         //
         // assumption for the moment:
         // - max one service per atom
         // - the developer has to create a NSDPlusPlus.ServiceImplementation object to implement the actions
-        // - the interface specification is in the manifest
         //
         serviceImplementation.service = obj.localService;
         serviceImplementations.push(serviceImplementation);
         obj.serviceImplementation = "" + (serviceImplementations.length - 1);
-        conn.send(JSON.stringify(obj));
+        socket.send(JSON.stringify(obj));
     };
 
     //
@@ -284,19 +278,15 @@ var NSDPlusPlus = {};
     /////////////////////////////////////////////////////
     //// updateEvent ////////////////////////////////////
     /////////////////////////////////////////////////////
-    Coltram.updateEvent = function (eventName, eventValue) {
+    NSDPlusPlus.updateEvent = function (eventName, eventValue) {
         // check that eventName is in the right list
-        if (!(manifest.atom.interface.eventList != null &&
-                manifest.atom.interface.eventList.indexOf(eventName) >= 0)) {
-            throw "unknown event " + eventName;
-        }
         // propagate the value to the agent
         if (eventValues[eventName] != eventValue) {
             var obj = {};
             obj.purpose = "updateEvent";
             obj.eventName = eventName;
             obj.eventValue = JSON.stringify(eventValue);
-            conn.send(JSON.stringify(obj));
+            socket.send(JSON.stringify(obj));
         }
     };
 
@@ -346,7 +336,7 @@ var NSDPlusPlus = {};
             obj.replyCallBack = getTokenForCallBack(replyCallBack);
             var s = JSON.stringify(obj);
             //NSDPlusPlus.logger(s);
-            conn.send(s);
+            socket.send(s);
         };
     }
 
@@ -388,7 +378,7 @@ var NSDPlusPlus = {};
             proxy.subscribe = function (eventList, serviceId, conn) {
                 return function (eventName, callback) {
                     if (typeof callback != 'string') {
-                        Coltram.logger("callback "+callback+" should be a string in subscribe");
+                        NSDPlusPlus.logger("callback "+callback+" should be a string in subscribe");
                         throw "callback "+callback+" should be a string in subscribe";
                     }
                     if (eventList.indexOf(eventName) >= 0) {
@@ -399,13 +389,13 @@ var NSDPlusPlus = {};
                         obj.callback = callback;
                         var s = JSON.stringify(obj);
                         //Coltram.logger(s);
-                        conn.send(s);
+                        socket.send(s);
                     } else {
-                        Coltram.logger("event "+eventName+" is not part of the interface of this service");
+                        NSDPlusPlus.logger("event "+eventName+" is not part of the interface of this service");
                         throw "event "+eventName+" is not part of the interface of this service";
                     }
                 }
-            }(service.eventList, serviceId, conn);
+            }(service.eventList, serviceId, socket);
             proxy.unsubscribe = function (eventList, serviceId, conn) {
                 return function (eventName, callback) {
                     if (eventList.indexOf(eventName) >= 0) {
@@ -416,20 +406,20 @@ var NSDPlusPlus = {};
                         obj.callback = callback;
                         var s = JSON.stringify(obj);
                         //Coltram.logger(s);
-                        conn.send(s);
+                        socket.send(s);
                     } else {
-                        Coltram.logger("event "+eventName+" is not part of the interface of this service");
+                        NSDPlusPlus.logger("event "+eventName+" is not part of the interface of this service");
                         throw "event "+eventName+" is not part of the interface of this service";
                     }
                 }
-            }(service.eventList, serviceId, conn);
+            }(service.eventList, serviceId, socket);
         } else {
             proxy.subscribe = function () {
-                Coltram.logger("this service does not have events");
+                NSDPlusPlus.logger("this service does not have events");
                 throw "this service does not have events";
             };
             proxy.unsubscribe = function () {
-                Coltram.logger("this service does not have events");
+                NSDPlusPlus.logger("this service does not have events");
                 throw "this service does not have events";
             };
         }
@@ -464,7 +454,7 @@ var NSDPlusPlus = {};
                 obj.replyCallBack = getTokenForCallBack(arguments[arguments.length - 1]);
             }
             var s = JSON.stringify(obj);
-            conn.send(s);
+            socket.send(s);
         };
     }
 
@@ -633,7 +623,7 @@ var NSDPlusPlus = {};
             answer.serviceId = obj.serviceId;
             answer.actionName = obj.actionName;
         }
-        conn.send(JSON.stringify(answer));
+        socket.send(JSON.stringify(answer));
     }
 
     //

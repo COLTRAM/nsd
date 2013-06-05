@@ -29,13 +29,23 @@ serviceImplementation.lightSwitch = function (newTargetValue) {
     } else {
         document.getElementById("light").style.cssText = "background-image: url('res/lightOn.svg')";
     }
+    return {response: "switched on "+ new Date().toLocaleTimeString()};
 };
 
+serviceImplementation.EVENTS = ["progress"];
+
+var state = 0;
+
+function eventing() {
+    NSDPlusPlus.updateEvent("progress", state++);
+    setTimeout(eventing, 3000);
+}
 
 window.onload = function () {
     NSDPlusPlus.addEventListener('connected', function () {
-        NSDPlusPlus.expose("communicationtest", "zeroconf", serviceImplementation);
-        NSDPlusPlus.logger("Bonjour service 'communicationtest' exposed");
+        NSDPlusPlus.expose("communicationtest", "upnp", serviceImplementation);
+        NSDPlusPlus.logger("UPnP service 'communicationtest' exposed");
     });
     NSDPlusPlus.connect();
+    NSDPlusPlus.addEventListener("initialized", function() { setTimeout(eventing, 1000); });
 };

@@ -1,6 +1,24 @@
+/*
+ * Copyright (c) 2012-2013. Telecom ParisTech/TSI/MM/GPAC Jean-Claude Dufourd
+ * This code was developed with the Coltram project, funded by the French ANR.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * This notice must stay in all subsequent versions of this code.
+ */
+
 package org.coltram.nsd.communication;
 
-import org.coltram.nsd.types.ZCService;
+import org.coltram.nsd.bonjour.DiscoveredZCService;
+import org.coltram.nsd.interfaces.Connection;
 import org.java_websocket.WebSocket;
 import org.teleal.cling.UpnpService;
 import org.teleal.cling.model.Namespace;
@@ -9,16 +27,15 @@ import org.teleal.cling.model.meta.*;
 
 import java.nio.channels.NotYetConnectedException;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class ServiceManager {
     //
-    private static Logger log = Logger.getLogger(ServiceManager.class.getName());
+    private static java.util.logging.Logger log = java.util.logging.Logger.getLogger(ServiceManager.class.getName());
 
-    private GeneralManager GeneralManager;
+    private TopManager topManager;
 
-    public ServiceManager(GeneralManager GeneralManager) {
-        this.GeneralManager = GeneralManager;
+    public ServiceManager(TopManager topManager) {
+        this.topManager = topManager;
     }
 
     /**
@@ -28,8 +45,8 @@ public class ServiceManager {
      * @return the service object
      */
     public Service findService(String serviceId) {
-        synchronized (GeneralManager.getDevices()) {
-            for (Device d : GeneralManager.getDevices()) {
+        synchronized (topManager.getDevices()) {
+            for (Device d : topManager.getDevices()) {
                 if (serviceId.startsWith(d.getIdentity().getUdn().getIdentifierString())) {
                     for (Service s : d.getServices()) {
                         if (serviceId.endsWith(s.getReference().getServiceId().toString())) {
@@ -48,9 +65,9 @@ public class ServiceManager {
      * @param serviceId id (NSD-style) of the service that we look for
      * @return the service object
      */
-    public ZCService findBonjourService(String serviceId) {
-        synchronized (GeneralManager.getServices()) {
-            for (ZCService d : GeneralManager.getServices()) {
+    public DiscoveredZCService findBonjourService(String serviceId) {
+        synchronized (topManager.getServices()) {
+            for (DiscoveredZCService d : topManager.getServices()) {
                 if (serviceId.equals(d.getId())) {
                     return d;
                 }
@@ -64,30 +81,23 @@ public class ServiceManager {
      *
      * @param conn the connection to the webapp to inform
      */
-    public void signalNewServices(WebSocket conn) {
+    public void signalNewServices(Connection conn) {
         StringBuilder sb = new StringBuilder("{\"purpose\":\"serviceDiscovered\",\"services\":[");
         boolean insertComma = false;
-        for (Device d : GeneralManager.getDevices()) {
-            if (insertComma) {
-                sb.append(",");
-            } else {
-                insertComma = true; // insert a comma starting at second time
-            }
+        for (Device d : topManager.getDevices()) {
             Service services[] = d.getServices();
             for (int i = 0; i < services.length; i++) {
-                if (i > 0) {
+                if (insertComma) {
                     sb.append(",");
                 }
-                signalService(services[i], d, sb);
+                insertComma = signalService(services[i], d, sb);
             }
         }
-        for (ZCService s : GeneralManager.getServices()) {
+        for (DiscoveredZCService s : topManager.getServices()) {
             if (insertComma) {
                 sb.append(",");
-            } else {
-                insertComma = true; // insert a comma starting at second time
             }
-            signalService(s, sb);
+            insertComma = signalService(s, sb);
         }
         sb.append("]}");
         String serviceString = sb.toString();
@@ -109,7 +119,7 @@ public class ServiceManager {
      * @param conn the connection to the webapp to inform
      * @param d    the removed device
      */
-    public void signalRemoveServices(WebSocket conn, Device d) {
+    public void signalRemoveServices(Connection conn, Device d) {
         StringBuilder sb = new StringBuilder("{\"purpose\":\"serviceRemoved\",\"services\":[");
         Service services[] = d.getServices();
         for (int i = 0; i < services.length; i++) {
@@ -137,7 +147,7 @@ public class ServiceManager {
      * @param conn    the connection to the webapp to inform
      * @param service the removed service
      */
-    public void signalRemoveServices(WebSocket conn, ZCService service) {
+    public void signalRemoveServices(Connection conn, DiscoveredZCService service) {
         StringBuilder sb = new StringBuilder("{\"purpose\":\"serviceRemoved\",\"services\":[");
         signalService(service, sb);
         sb.append("]}");
@@ -160,7 +170,7 @@ public class ServiceManager {
      * @param d             the device object
      * @param stringBuilder the string builder into which to write the information
      */
-    public void signalService(Service s, Device d, StringBuilder stringBuilder) {
+    public boolean signalService(Service s, Device d, StringBuilder stringBuilder) {
         //System.out.println("signal " + s.getServiceType() + " " + d.getDetails().getFriendlyName() + " " + s.getServiceType().getType());
         log.finer("signal " + s.getServiceType() + " " + d.getDetails().getFriendlyName());
         stringBuilder.append("{\"name\":\"");
@@ -178,7 +188,7 @@ public class ServiceManager {
             stringBuilder.append("\",\"url\":\"");
             stringBuilder.append(((RemoteDevice)d).normalizeURI(((RemoteService) s).getControlURI()));
         } else {
-            UpnpService upnpService = GeneralManager.getConnectionManager().getUpnpService();
+            UpnpService upnpService = topManager.getConnectionManager().getUpnpService();
             Namespace ns = upnpService.getConfiguration().getNamespace();
             List<NetworkAddress> activeStreamServers =
                     upnpService.getRouter().getActiveStreamServers(null);
@@ -221,7 +231,24 @@ public class ServiceManager {
             }
             stringBuilder.append("]}");
         }
+        StateVariable stateVariables[] = s.getStateVariables();
+        boolean noEvents = true;
+        for (StateVariable sv : stateVariables) {
+            if (sv.getEventDetails() != null) {
+                if (noEvents) {
+                    stringBuilder.append("],\"eventList\":[\"");
+                    noEvents = false;
+                } else {
+                    stringBuilder.append("\",\"");
+                }
+                stringBuilder.append(sv.getName());
+            }
+        }
+        if (!noEvents) {
+            stringBuilder.append("\"");
+        }
         stringBuilder.append("]}");
+        return true;
     }
 
     /**
@@ -230,7 +257,7 @@ public class ServiceManager {
      * @param s             the service object
      * @param stringBuilder the string builder into which to write the information
      */
-    public void signalService(ZCService s, StringBuilder stringBuilder) {
+    public boolean signalService(DiscoveredZCService s, StringBuilder stringBuilder) {
         //System.out.println("signal " + s.getServiceType() + " " + d.getDetails().getFriendlyName() + " " + s.getServiceType().getType());
         log.finer("signal " + s.getType() + " " + s.getName());
         stringBuilder.append("{\"name\":\"");
@@ -240,11 +267,17 @@ public class ServiceManager {
         stringBuilder.append("\",\"id\":\"");
         stringBuilder.append(s.getId());
         stringBuilder.append("\",\"config\":\"");
-        stringBuilder.append(s.getConfig("DName"));
+        stringBuilder.append(s.getConfig("Desc"));
         stringBuilder.append("\",\"url\":\"");
         stringBuilder.append(s.getUrl());
         stringBuilder.append("\",\"actionList\":");
         stringBuilder.append(s.getActionList());
+        String eventList = s.getEventList();
+        if (eventList != null) {
+            stringBuilder.append(",\"eventList\":");
+            stringBuilder.append(eventList);
+        }
         stringBuilder.append("}");
+        return true;
     }
 }

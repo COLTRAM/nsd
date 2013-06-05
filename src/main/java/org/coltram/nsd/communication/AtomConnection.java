@@ -17,14 +17,14 @@
 
 package org.coltram.nsd.communication;
 
-import org.coltram.nsd.services.BonjourService;
-import org.coltram.nsd.services.BonjourServiceListener;
-import org.java_websocket.WebSocket;
+import org.coltram.nsd.interfaces.Connection;
+import org.coltram.nsd.bonjour.LocalExposedBonjourService;
+import org.coltram.nsd.interfaces.BonjourServiceListener;
+import org.coltram.nsd.types.LocalHost;
 import org.json.JSONObject;
 import org.teleal.cling.model.meta.LocalDevice;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.channels.NotYetConnectedException;
 import java.util.ArrayList;
@@ -33,29 +33,33 @@ import java.util.logging.Logger;
 
 public class AtomConnection implements BonjourServiceListener {
     private static Logger log = Logger.getLogger(AtomConnection.class.getName());
-    private WebSocket connection = null;
+    private Connection connection = null;
     private ArrayList<LocalDevice> associatedDevices = new ArrayList<LocalDevice>();
-    private ArrayList<BonjourService> bonjourServices = new ArrayList<BonjourService>();
+    private ArrayList<LocalExposedBonjourService> bonjourServices = new ArrayList<LocalExposedBonjourService>();
     private boolean waitingForReply = false;
     private String id;
     private static int nextId = 0;
     private JSONObject reply = null;
     private ServerSocket serverSocket = null;
+    private String exposedService = null;
 
-    public AtomConnection(WebSocket connection) {
+    public String getExposedService() { return exposedService; }
+    public void setExposedService(String s) { exposedService = s; }
+
+    public AtomConnection(Connection connection) {
         this.connection = connection;
         id = (nextId++)+"";
     }
 
-    public ServerSocket getServerSocket(int port, InetAddress inetAddress) throws IOException {
+    public ServerSocket getServerSocket() throws IOException {
         if (serverSocket == null) {
-            serverSocket = new ServerSocket(port, -1, inetAddress);
+            serverSocket = new ServerSocket(0);
             serverSocket.setSoTimeout(2000);
         }
         return serverSocket;
     }
 
-    public WebSocket getConnection() {
+    public Connection getConnection() {
         return connection;
     }
 
@@ -67,7 +71,7 @@ public class AtomConnection implements BonjourServiceListener {
         associatedDevices.add(d);
     }
 
-    public void add(BonjourService coltramBonjourService) {
+    public void add(LocalExposedBonjourService coltramBonjourService) {
         bonjourServices.add(coltramBonjourService);
         coltramBonjourService.registerListener(this);
     }
@@ -76,7 +80,7 @@ public class AtomConnection implements BonjourServiceListener {
         return associatedDevices;
     }
 
-    public Collection<BonjourService> bonjourServices() {
+    public Collection<LocalExposedBonjourService> bonjourServices() {
         return bonjourServices;
     }
 
@@ -98,7 +102,7 @@ public class AtomConnection implements BonjourServiceListener {
 
     public void receive(String message) {
         try {
-            log.info("receiving message from CBS: "+message);
+            log.finer("receiving message from CBS: " + message);
             connection.send(message);
         } catch (NotYetConnectedException e) {
             log.throwing(getClass().getName(), "receive", e);

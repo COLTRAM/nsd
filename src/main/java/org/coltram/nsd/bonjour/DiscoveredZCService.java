@@ -15,31 +15,32 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.types;
+package org.coltram.nsd.bonjour;
 
-import org.coltram.nsd.services.BonjourService;
+import org.coltram.nsd.types.LocalHost;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.jmdns.ServiceInfo;
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-public class ZCService {
-    private static Logger log = Logger.getLogger(ZCService.class.getName());
+public class DiscoveredZCService {
+    private static Logger log = Logger.getLogger(DiscoveredZCService.class.getName());
     private String name;
     private String type;
     private String url;
     private HashMap<String, String> config;
     private ServiceInfo info;
     private ArrayList<Action> actions = new ArrayList<Action>();
+    private ArrayList<String> events = new ArrayList<String>();
     private String actionList = null;
+    private String eventList = null;
     private Socket socket = null;
     private DataOutputStream socketDOS = null;
 
@@ -68,10 +69,6 @@ public class ZCService {
             return name;
         }
 
-        public ArrayList<Argument> getArgs() {
-            return args;
-        }
-
         Action(String name, ArrayList<Argument> args) {
             this.name = name;
             this.args = args;
@@ -85,24 +82,15 @@ public class ZCService {
             }
             return args;
         }
-
-        public boolean hasOutArgs() {
-            for (Argument arg : args) {
-                if (arg.getDirection().equalsIgnoreCase("out")) {
-                    return true;
                 }
-            }
-            return false;
-        }
-    }
 
     @SuppressWarnings("deprecation")
-    public ZCService(ServiceInfo info, String name, String type) {
+    public DiscoveredZCService(ServiceInfo info, String name, String type) {
         this.info = info;
         this.name = name;
         this.type = type;
         this.url = info.getURL();
-        this.config = BonjourService.textBytestoHashMap(info.getTextBytes());
+        this.config = LocalExposedBonjourService.textBytestoHashMap(info.getTextBytes());
         String desc = getConfig("Desc");
         // desc is now a URL to the description
         try {
@@ -110,20 +98,34 @@ public class ZCService {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new URL(desc).openStream()));
                 StringBuilder stringBuilder = new StringBuilder();
                 String inputLine;
-                while ((inputLine = bufferedReader.readLine()) != null) stringBuilder.append(inputLine);
+                while ((inputLine = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(inputLine);
+                }
                 bufferedReader.close();
-                actionList = stringBuilder.toString();
-                JSONArray array = new JSONArray(actionList);
+                String serv = stringBuilder.toString();
+                JSONObject service = new JSONObject(serv);
+                JSONArray array = service.optJSONArray("actionList");
+                actionList = array.toString();
                 for (int i = 0; i < array.length(); i++) {
                     JSONObject object = array.getJSONObject(i);
                     actions.add(new Action(object.getString("name"),
                             Action.getArguments(object.getJSONArray("args"))));
                 }
-                //actionList = actionList.replaceAll("\"", "\\\"");
+                array = service.optJSONArray("eventList");
+                if (array != null) {
+                    eventList = array.toString();
+                    for (int i = 0; i < array.length(); i++) {
+                        events.add(array.getString(i));
+            }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getEventList() {
+        return eventList;
     }
 
     public Action hasAction(String name) {
@@ -163,41 +165,31 @@ public class ZCService {
         return config.get(key);
     }
 
-    public boolean equals(ZCService other) {
+    public boolean equals(DiscoveredZCService other) {
         return getId().equals(other.getId()) &&
                 name.equals(other.name) &&
                 type.equals(other.type);
     }
 
-    public static InetAddress localAddress;
-
-    static {
-        try {
-            localAddress = InetAddress.getLocalHost();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @SuppressWarnings("deprecation")
     public boolean isLocal() {
-        return info.getInet4Address().equals(localAddress);
+        return info.getInet4Address().equals(LocalHost.address);
     }
 
     @SuppressWarnings("deprecation")
     public Socket getSocket() throws IOException {
-        log.info("getSocket " + info.getInet4Address() + " " + info.getPort() + " " + socket);
+        log.fine("getSocket " + info.getInet4Address() + " " + info.getPort() + " " + socket);
         if (socket == null || socket.isClosed()) {
             if (socket != null) {
                 socketDOS.close();
                 socket.close();
             }
-            log.info("socket is null or closed, creating a new socket " + info.getInet4Address() + " " + info.getPort() + " " + localAddress + " " + (info.getPort() - 1000));
-            socket = new Socket(info.getInet4Address(), info.getPort(), localAddress, info.getPort() - 1000);
+            log.finer("socket is null or closed, creating a new socket " + info.getInet4Address() + " " + info.getPort());
+            socket = new Socket(info.getInet4Address(), info.getPort());
             socket.setKeepAlive(true);
             socketDOS = new DataOutputStream(socket.getOutputStream());
         } else {
-            log.info("socket is reusable");
+            log.finer("socket is reusable");
         }
         return socket;
     }

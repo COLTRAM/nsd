@@ -32,30 +32,9 @@ serviceImplementation.lightSwitch = function (newTargetValue) {
     return {response: "switched on "+ new Date().toLocaleTimeString()};
 };
 
-// service interface definition
-var localService = {
-    "type": "communicationtest",
-    "protocol": "upnp",
-    "actionList": [
-        {
-            "name": "lightSwitch",
-            "args": [
-                {
-                    "name": "newTargetValue",
-                    "dir": "in"
-                },
-                {
-                    "name": "response",
-                    "dir": "out"
-                }
-            ]
-        }
-    ]
-};
-
 window.onload = function () {
     NSDPlusPlus.addEventListener('connected', function () {
-        NSDPlusPlus.expose(localService, serviceImplementation);
+        NSDPlusPlus.expose("communicationtest", "upnp", serviceImplementation);
         NSDPlusPlus.logger("UPnP service 'communicationtest' exposed");
     });
     NSDPlusPlus.connect();

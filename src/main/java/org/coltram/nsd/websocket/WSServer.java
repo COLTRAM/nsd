@@ -15,54 +15,41 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.communication;
+package org.coltram.nsd.websocket;
 
+import org.coltram.nsd.communication.AtomConnection;
+import org.coltram.nsd.communication.ConnectionManager;
+import org.coltram.nsd.communication.ProxyMessenger;
+import org.coltram.nsd.communication.TopManager;
 import org.java_websocket.WebSocket;
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.handshake.ClientHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.teleal.cling.UpnpService;
-
-import javax.jmdns.JmDNS;
 import java.net.InetSocketAddress;
-import java.util.logging.Logger;
 
 public class WSServer extends WebSocketServer {
-    private static Logger log = Logger.getLogger(WSServer.class.getName());
+    private static java.util.logging.Logger log = java.util.logging.Logger.getLogger(WSServer.class.getName());
 
-    private ConnectionManager connectionManager;
+    private TopManager topManager;
     private ProxyMessenger proxyMessenger;
 
-    public WSServer() {
+    public WSServer(TopManager topManager, ProxyMessenger proxyMessenger) {
         super(new InetSocketAddress(0xDDDD));
-        GeneralManager GeneralManager = new GeneralManager();
-        connectionManager = GeneralManager.getConnectionManager();
-        proxyMessenger = new ProxyMessenger(GeneralManager);
+        this.topManager = topManager;
+        this.proxyMessenger = proxyMessenger;
     }
     
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setUpnpService(UpnpService upnpService) {
-        connectionManager.setUpnpService(upnpService);
-    }
-
-    public void setBonjourService(JmDNS jmdns) {
-        connectionManager.setBonjourService(jmdns);
-    }
-
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         log.finer(conn + " onOpen");
-        connectionManager.add(conn);
+        topManager.getConnectionManager().add(new ConnectionAdapter(conn));
     }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
         log.finer(conn + " onClose");
-        connectionManager.remove(conn);
+        topManager.getConnectionManager().remove(conn);
     }
 
     @Override
@@ -72,7 +59,7 @@ public class WSServer extends WebSocketServer {
         try {
             log.finer(message);
             JSONObject object = new JSONObject(message);
-            AtomConnection atomConnection = connectionManager.getAtomConnection(conn);
+            AtomConnection atomConnection = topManager.getConnectionManager().getAtomConnection(conn);
             if (atomConnection == null) {
                 log.info("onMessage with an unknown WebSocket(?)");
                 return;
@@ -93,7 +80,7 @@ public class WSServer extends WebSocketServer {
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        connectionManager.remove(conn);
+        topManager.getConnectionManager().remove(conn);
         ex.printStackTrace();
     }
 }

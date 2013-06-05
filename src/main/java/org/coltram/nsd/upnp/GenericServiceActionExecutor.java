@@ -15,7 +15,7 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.types;
+package org.coltram.nsd.upnp;
 
 import org.coltram.nsd.communication.AtomConnection;
 import org.json.JSONException;
@@ -33,11 +33,11 @@ import java.util.logging.Logger;
 public class GenericServiceActionExecutor extends AbstractActionExecutor {
     private static Logger log = Logger.getLogger(GenericServiceActionExecutor.class.getName());
     private AtomConnection connection;
-    private String callbackName;
+    private String serviceImplementationName;
 
-    public GenericServiceActionExecutor(AtomConnection connection, String callbackName) {
+    public GenericServiceActionExecutor(AtomConnection connection, String serviceImplementationName) {
         this.connection = connection;
-        this.callbackName = callbackName;
+        this.serviceImplementationName = serviceImplementationName;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class GenericServiceActionExecutor extends AbstractActionExecutor {
         JSONObject object = new JSONObject();
         try {
             object.put("purpose", "serviceAction");
-            object.put("implementation", callbackName);
+            object.put("implementation", serviceImplementationName);
             object.put("actionName", actionInvocation.getAction().getName());
             try {
                 for (ActionArgument<LocalService> argument : actionInvocation.getAction().getInputArguments()) {

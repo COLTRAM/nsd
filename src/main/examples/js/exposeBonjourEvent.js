@@ -31,6 +31,14 @@ serviceImplementation.lightSwitch = function (newTargetValue) {
     }
 };
 
+serviceImplementation.EVENTS = ["progress"];
+
+var state = 0;
+
+function eventing() {
+    NSDPlusPlus.updateEvent("progress", state++);
+    setTimeout(eventing, 3000);
+}
 
 window.onload = function () {
     NSDPlusPlus.addEventListener('connected', function () {
@@ -38,4 +46,6 @@ window.onload = function () {
         NSDPlusPlus.logger("Bonjour service 'communicationtest' exposed");
     });
     NSDPlusPlus.connect();
+    NSDPlusPlus.addEventListener("initialized", function() { setTimeout(eventing, 1000); });
 };
+

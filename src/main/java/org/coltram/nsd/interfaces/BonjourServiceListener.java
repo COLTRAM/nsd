@@ -15,17 +15,8 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.types;
+package org.coltram.nsd.interfaces;
 
-import org.teleal.cling.model.state.StateVariableAccessor;
-
-public class GenericServiceVariable extends StateVariableAccessor {
-    public Class<?> getReturnType() {
-        return String.class;
-    }
-
-    public Object read(Object serviceImpl) throws Exception {
-        return null;
-    }
-
+public interface BonjourServiceListener {
+    public void receive(String message);
 }

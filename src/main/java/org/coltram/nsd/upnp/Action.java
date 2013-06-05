@@ -15,7 +15,7 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.types;
+package org.coltram.nsd.upnp;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +38,7 @@ public class Action<S extends Service> extends org.teleal.cling.model.meta.Actio
         try {
             for (int i = 0; i < array.length(); i++) {
                 JSONObject object = array.getJSONObject(i);
-                args[i] = new ActionArgument(object.getString("name"), "sv" + (stateVariableIndex++),
+                args[i] = new ActionArgument(object.getString("name"), "coltramAutoStateVariableName" + (stateVariableIndex++),
                         ("in".equalsIgnoreCase(object.getString("dir")) ? ActionArgument.Direction.IN :
                                 ActionArgument.Direction.OUT));
             }

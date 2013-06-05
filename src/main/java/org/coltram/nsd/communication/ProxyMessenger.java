@@ -17,25 +17,27 @@
 
 package org.coltram.nsd.communication;
 
-import org.java_websocket.WebSocket;
+import org.coltram.nsd.bonjour.BonjourProcessor;
+import org.coltram.nsd.types.LocalHost;
+import org.coltram.nsd.upnp.UPnPProcessor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.logging.Logger;
+import java.nio.channels.NotYetConnectedException;
 
 @SuppressWarnings("unchecked")
 public class ProxyMessenger {
     //
-    private static Logger log = Logger.getLogger(ProxyMessenger.class.getName());
+    private static java.util.logging.Logger log = java.util.logging.Logger.getLogger(ProxyMessenger.class.getName());
 
-    private GeneralManager GeneralManager;
+    private TopManager coltramManager;
     private UPnPProcessor uPnPProcessor;
     private BonjourProcessor bonjourProcessor;
 
-    public ProxyMessenger(GeneralManager GeneralManager) {
-        this.GeneralManager = GeneralManager;
-        uPnPProcessor = new UPnPProcessor(GeneralManager);
-        bonjourProcessor = new BonjourProcessor(GeneralManager);
+    public ProxyMessenger(TopManager coltramManager) {
+        this.coltramManager = coltramManager;
+        uPnPProcessor = new UPnPProcessor(coltramManager);
+        bonjourProcessor = new BonjourProcessor(coltramManager);
     }
 
     private static final int protocolUPNP = 0;
@@ -100,7 +102,8 @@ public class ProxyMessenger {
             serviceType = "zeroconf:_"+serviceType+"._tcp.local.";
             friendlyName = "coltram";
         }
-        friendlyName += "@" + GeneralManager.getConnectionManager().getHostName();
+        friendlyName += "@" + LocalHost.name;
+        connection.setExposedService(serviceId);
         if (serviceType.startsWith("zeroconf:")) {
             bonjourProcessor.exposeService(serviceType, friendlyName, deviceType,
                                            service, serviceId, connection);
@@ -119,10 +122,10 @@ public class ProxyMessenger {
      * @param connection the incoming connection, to be able to reply if necessary
      * @throws JSONException as usual when manipulating JSON objects
      */
-    public void dispatcher(JSONObject object, WebSocket connection) throws JSONException {
+    public void dispatcher(JSONObject object, Object connection) throws JSONException {
         AtomConnection ac = null;
-            for (AtomConnection atomConnection : GeneralManager.getConnectionManager().getConnections()) {
-                if (atomConnection.getConnection() == connection) {
+            for (AtomConnection atomConnection : coltramManager.getConnectionManager().getConnections()) {
+                if (atomConnection.getConnection().is(connection)) {
                     ac = atomConnection;
                     break;
                 }
@@ -135,6 +138,12 @@ public class ProxyMessenger {
             processCallAction(object, ac, true);
         } else if (purpose.compareTo("exposeService") == 0) {
             processExposeService(object, ac);
+        } else if (purpose.compareTo("updateEvent") == 0) {
+            processUpdateEvent(object, ac);
+        } else if (purpose.compareTo("subscribe") == 0) {
+            processSubscribe(object, ac);
+        } else if (purpose.compareTo("unsubscribe") == 0) {
+            processUnsubscribe(object, ac);
         } else if (purpose.compareTo("reply") == 0) {
             // this is a reply sent by a Bonjour service
             bonjourProcessor.processReply(object);
@@ -144,6 +153,77 @@ public class ProxyMessenger {
             //
             //ColtramLogger.logln("websockets message to proxy not understood: " + purpose);
             log.info("Purpose " + purpose + " not understood");
+        }
+    }
+
+    /**
+     * Process purpose:updateEvent messages
+     *
+     * @param object     the JSON message
+     * @param connection the incoming connection, to be able to reply if necessary
+     * @throws JSONException as usual when manipulating JSON objects
+     */
+    private void processUpdateEvent(JSONObject object, AtomConnection connection) throws JSONException {
+        String eventName = object.getString("eventName");
+        String eventValue = object.getString("eventValue");
+        String serviceId = connection.getExposedService();
+        switch (protocol(serviceId)) {
+            case protocolUPNP:
+                uPnPProcessor.UpdateEvent(eventName, eventValue);
+                break;
+            case protocolBonjour:
+                bonjourProcessor.UpdateEvent(eventName, eventValue);
+                break;
+            default:
+                log.info("unknown discovery and communication protocol");
+                break;
+        }
+    }
+
+    /**
+     * Process purpose:subscribe messages
+     *
+     * @param object     the JSON message
+     * @param connection the incoming connection, to be able to reply if necessary
+     * @throws JSONException as usual when manipulating JSON objects
+     */
+    private void processSubscribe(JSONObject object, AtomConnection connection) throws JSONException {
+        String eventName = object.getString("eventName");
+        String callback = object.getString("callback");
+        String serviceId = object.getString("serviceId");
+        switch (protocol(serviceId)) {
+            case protocolUPNP:
+                uPnPProcessor.Subscribe(serviceId, eventName, callback, connection);
+                break;
+            case protocolBonjour:
+                bonjourProcessor.Xscribe(object, serviceId, connection);
+                break;
+            default:
+                log.info("unknown discovery and communication protocol");
+                break;
+        }
+    }
+
+    /**
+     * Process purpose:unsubscribe messages
+     *
+     * @param object     the JSON message
+     * @param connection the incoming connection, to be able to reply if necessary
+     * @throws JSONException as usual when manipulating JSON objects
+     */
+    private void processUnsubscribe(JSONObject object, AtomConnection connection) throws JSONException {
+        String eventName = object.getString("eventName");
+        String serviceId = object.getString("serviceId");
+        switch (protocol(serviceId)) {
+            case protocolUPNP:
+                uPnPProcessor.Unsubscribe(serviceId, eventName);
+                break;
+            case protocolBonjour:
+                bonjourProcessor.Xscribe(object, serviceId, connection);
+                break;
+            default:
+                log.info("unknown discovery and communication protocol");
+                break;
         }
     }
 

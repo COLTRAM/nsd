@@ -15,7 +15,7 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.communication;
+package org.coltram.nsd.upnp;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,7 +30,7 @@ public class NSDActionInvocation extends ActionInvocation {
     private static Logger log = Logger.getLogger(NSDActionInvocation.class.getName());
 
     @SuppressWarnings("unchecked")
-    public NSDActionInvocation(Action action, JSONObject args) {
+    public NSDActionInvocation(org.teleal.cling.model.meta.Action action, JSONObject args) {
         super(action);
         log.finer("setInput action:"+action.getName());
         try {

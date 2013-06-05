@@ -1,8 +1,26 @@
+/*
+ * Copyright (c) 2012-2013. Telecom ParisTech/TSI/MM/GPAC Jean-Claude Dufourd
+ * This code was developed with the Coltram project, funded by the French ANR.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * This notice must stay in all subsequent versions of this code.
+ */
+
 package org.coltram.nsd.communication;
 
-import org.coltram.nsd.services.BonjourService;
-import org.coltram.nsd.types.ZCService;
-import org.java_websocket.WebSocket;
+import org.coltram.nsd.interfaces.Connection;
+import org.coltram.nsd.bonjour.DiscoveredZCService;
+import org.coltram.nsd.bonjour.LocalExposedBonjourService;
+import org.coltram.nsd.types.LocalHost;
 import org.json.JSONException;
 import org.teleal.cling.UpnpService;
 import org.teleal.cling.controlpoint.ActionCallback;
@@ -11,57 +29,21 @@ import org.teleal.cling.model.meta.LocalDevice;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
-import java.net.*;
 import java.nio.channels.NotYetConnectedException;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.logging.Logger;
 
 public class ConnectionManager {
-    private static Logger log = Logger.getLogger(ConnectionManager.class.getName());
     private final ArrayList<AtomConnection> connections = new ArrayList<AtomConnection>();
 
-    private GeneralManager generalManager;
-
-    private String hostName;
+    private TopManager topManager;
 
     //
     private JmDNS jmdns = null;
     private UpnpService upnpService = null;
 
-    public ConnectionManager(GeneralManager GeneralManager) {
-        this.generalManager = GeneralManager;
-        try {
-            hostName = InetAddress.getLocalHost().getCanonicalHostName();
-            boolean already = false;
-            Enumeration e = NetworkInterface.getNetworkInterfaces();
-            while (e.hasMoreElements()) {
-                NetworkInterface n = (NetworkInterface) e.nextElement();
-                Enumeration ee = n.getInetAddresses();
-                while (ee.hasMoreElements()) {
-                    InetAddress i = (InetAddress) ee.nextElement();
-                    if (!i.isLoopbackAddress() &&
-                            !i.isMulticastAddress() &&
-                            !i.isAnyLocalAddress() &&
-                            !i.isSiteLocalAddress() &&
-                            !i.isLinkLocalAddress() &&
-                            i instanceof Inet4Address) {
-                        if (already) {
-                            log.info("multiple network interfaces: " + i.getHostAddress());
-                        } else {
-                            already = true;
-                            hostName = i.getCanonicalHostName();
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Thread.yield();
-        }
+    public ConnectionManager(TopManager topManager) {
+        this.topManager = topManager;
     }
-
-    public String getHostName() { return hostName; }
-
 
     /**
      * Returns a way to iterate on connections
@@ -94,7 +76,6 @@ public class ConnectionManager {
         this.jmdns = jmdns;
     }
 
-    @SuppressWarnings("unused")
     public void execute(ActionCallback ab) {
         upnpService.getControlPoint().execute(ab);
     }
@@ -104,19 +85,19 @@ public class ConnectionManager {
      *
      * @param connection the connection object
      */
-    public void add(WebSocket connection) {
+    public void add(Connection connection) {
         //ColtramLogger.logln("add websocket connection");
         synchronized (connections) {
             AtomConnection ac = new AtomConnection(connection);
             connections.add(ac);
             //StringBuilder s = new StringBuilder("{\"purpose\":\"initialize\",\"myAgentService\":");
             StringBuilder s = new StringBuilder("{\"purpose\":\"initialize\"");
-            //generalManager.getServiceManager().signalService(agentService, thisDevice, s);
+            //topManager.getServiceManager().signalService(agentService, thisDevice, s);
             s.append(",\"atomId\":\"");
             s.append(ac.getId());
             s.append("\",\"hostName\":\"");
             try {
-                s.append(getHostName());
+                s.append(LocalHost.name);
                 s.append("\"}");
                 connection.send(s.toString());
                 //ColtramLogger.logln("out>" + s);
@@ -125,7 +106,7 @@ public class ConnectionManager {
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }
-            generalManager.getServiceManager().signalNewServices(connection);
+            topManager.getServiceManager().signalNewServices(connection);
         }
     }
 
@@ -134,15 +115,15 @@ public class ConnectionManager {
      *
      * @param connection the connection object
      */
-    public void remove(WebSocket connection) {
+    public void remove(Object connection) {
         //ColtramLogger.logln("remove websocket connection");
         synchronized (connections) {
             for (AtomConnection ac : connections) {
-                if (connection == ac.getConnection()) {
+                if (ac.getConnection().is(connection)) {
                     for (LocalDevice d : ac.devices()) {
                         upnpService.getRegistry().removeDevice(d);
                     }
-                    for (BonjourService s : ac.bonjourServices()) {
+                    for (LocalExposedBonjourService s : ac.bonjourServices()) {
                         jmdns.unregisterService(s.getServiceInfo());
                         s.stop();
                     }
@@ -168,14 +149,14 @@ public class ConnectionManager {
      * @param d the new device object
      */
     public void add(Device d) {
-        synchronized (generalManager.getDevices()) {
-            if (generalManager.getDevices().contains(d)) {
+        synchronized (topManager.getDevices()) {
+            if (topManager.getDevices().contains(d)) {
                 return;
             }
-            generalManager.getDevices().add(d);
+            topManager.getDevices().add(d);
             synchronized (connections) {
                 for (AtomConnection connection : connections) {
-                    generalManager.getServiceManager().signalNewServices(connection.getConnection());
+                    topManager.getServiceManager().signalNewServices(connection.getConnection());
                 }
             }
         }
@@ -189,15 +170,15 @@ public class ConnectionManager {
      */
     public void add(ServiceEvent event) {
         @SuppressWarnings("deprecation")
-        ZCService zcService = new ZCService(event.getInfo(), event.getName(), event.getType());
-        synchronized (generalManager.getServices()) {
-            if (generalManager.getServices().contains(zcService)) {
+        DiscoveredZCService zcService = new DiscoveredZCService(event.getInfo(), event.getName(), event.getType());
+        synchronized (topManager.getServices()) {
+            if (topManager.getServices().contains(zcService)) {
                 return;
             }
-            generalManager.getServices().add(zcService);
+            topManager.getServices().add(zcService);
             synchronized (connections) {
                 for (AtomConnection connection : connections) {
-                    generalManager.getServiceManager().signalNewServices(connection.getConnection());
+                    topManager.getServiceManager().signalNewServices(connection.getConnection());
                 }
             }
         }
@@ -209,13 +190,13 @@ public class ConnectionManager {
      * @param event the service event object
      */
     public void remove(ServiceEvent event) {
-        ZCService zcService = null;
-        synchronized (generalManager.getServices()) {
-            for (ZCService s : generalManager.getServices()) {
+        DiscoveredZCService zcService = null;
+        synchronized (topManager.getServices()) {
+            for (DiscoveredZCService s : topManager.getServices()) {
                 if (s.getId().equals(event.getInfo().getQualifiedName()) &&
                         s.getName().equals(event.getName()) &&
                         s.getType().equals(event.getType())) {
-                    generalManager.getServices().remove(s);
+                    topManager.getServices().remove(s);
                     zcService = s;
                     break;
                 }
@@ -223,7 +204,7 @@ public class ConnectionManager {
             if (zcService != null) {
                 synchronized (connections) {
                     for (AtomConnection connection : connections) {
-                        generalManager.getServiceManager().signalRemoveServices(connection.getConnection(), zcService);
+                        topManager.getServiceManager().signalRemoveServices(connection.getConnection(), zcService);
                     }
                 }
             }
@@ -236,15 +217,15 @@ public class ConnectionManager {
      * @param d the device object to remove
      */
     public void remove(Device d) {
-        synchronized (generalManager.getDevices()) {
-            for (Device d1 : generalManager.getDevices()) {
+        synchronized (topManager.getDevices()) {
+            for (Device d1 : topManager.getDevices()) {
                 if (d1 == d) {
                     synchronized (connections) {
                         for (AtomConnection connection : connections) {
-                            generalManager.getServiceManager().signalRemoveServices(connection.getConnection(), d);
+                            topManager.getServiceManager().signalRemoveServices(connection.getConnection(), d);
                         }
                     }
-                    generalManager.getDevices().remove(d1);
+                    topManager.getDevices().remove(d1);
                     return;
                 }
             }
@@ -252,12 +233,21 @@ public class ConnectionManager {
     }
 
 
-    public AtomConnection getAtomConnection(WebSocket connection) {
+    public AtomConnection getAtomConnection(Object connection) {
         synchronized (connections) {
             for (AtomConnection ac : connections) {
-                if (connection == ac.getConnection()) {
+                if (ac.getConnection().is(connection)) {
                     return ac;
                 }
+            }
+        }
+        return null;
+    }
+
+    public Connection getConnection(String connectionId) {
+        for (AtomConnection ac : connections) {
+            if (connectionId.equals(ac.getId())) {
+                return ac.getConnection();
             }
         }
         return null;

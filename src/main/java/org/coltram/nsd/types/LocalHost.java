@@ -15,8 +15,26 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-package org.coltram.nsd.services;
+package org.coltram.nsd.types;
 
-public interface BonjourServiceListener {
-    public void receive(String message);
+import java.io.IOException;
+import java.net.InetAddress;
+
+public class LocalHost {
+    public static InetAddress address;
+    public static String name;
+
+    static {
+        try {
+            address = InetAddress.getLocalHost();
+            name = address.getHostName();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean isLocal(String address) {
+        return address.equals(LocalHost.address) || address.equals("localhost");
+    }
+
 }

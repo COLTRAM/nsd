@@ -17,7 +17,7 @@
 
 package org.coltram.nsd.communication;
 
-import org.coltram.nsd.types.Frame;
+import org.coltram.nsd.interfaces.Frame;
 import org.teleal.cling.model.meta.LocalDevice;
 import org.teleal.cling.model.meta.RemoteDevice;
 import org.teleal.cling.registry.Registry;
