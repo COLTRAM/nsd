@@ -37,6 +37,9 @@ public class ConsoleApplication extends Application {
         //
         WSServer wsServer = new WSServer(getTopManager(), new ProxyMessenger(getTopManager()));
         wsServer.start();
+        log.info("-------------------------------------");
+        log.info("+ WebSocket-based NSD agent started +");
+        log.info("-------------------------------------");
     }
 
     public Properties getProperties() {

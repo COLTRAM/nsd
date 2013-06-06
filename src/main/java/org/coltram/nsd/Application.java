@@ -33,7 +33,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public abstract class Application {
-    private static Logger log = Logger.getLogger(Application.class.getName());
+    protected static Logger log = Logger.getLogger(Application.class.getName());
     private TopManager topManager = null;
     private HTTPServer httpServer = null;
     private static UpnpService upnpService = null;

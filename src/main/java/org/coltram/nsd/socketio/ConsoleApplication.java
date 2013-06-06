@@ -35,6 +35,9 @@ public class ConsoleApplication extends Application {
         super();
         // start the socketio server
         new Handler(getTopManager(), new ProxyMessenger(getTopManager()));
+        log.info("-------------------------------------");
+        log.info("+ socket.io-based NSD agent started +");
+        log.info("-------------------------------------");
     }
 
     public Properties getProperties() {

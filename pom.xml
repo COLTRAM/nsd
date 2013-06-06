@@ -79,21 +79,41 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>org.coltram.nsd.NSDAgent</mainClass>
-                        </manifest>
-                    </archive>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
+                        <id>make-assembly-websocket</id>
                         <!-- this is used for inheritance merges -->
                         <phase>package</phase>
                         <!-- bind to the packaging phase -->
                         <goals>
                             <goal>single</goal>
                         </goals>
+                        <configuration>
+                            <finalName>nsd-websocket</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>org.coltram.nsd.websocket.ConsoleApplication</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>make-assembly-socketio</id>
+                        <!-- this is used for inheritance merges -->
+                        <phase>package</phase>
+                        <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>nsd-socketio</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>org.coltram.nsd.socketio.ConsoleApplication</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
