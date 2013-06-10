@@ -56,15 +56,14 @@ public class LocalExposedBonjourService implements Runnable {
         log.finer("created coltram bonjour service on port " + serverSocket.getLocalPort() + " id:" + serviceId);
         JSONArray events = service.optJSONArray("eventList");
         if (events != null) {
-        try {
+            try {
                 eventVariables = new ArrayList<EventVariable>();
                 for (int i = 0; i < events.length(); i++) {
                     // create event variable
                     eventVariables.add(new EventVariable(events.getString(i)));
-        }
+                }
             } catch (JSONException e) {
-                Thread.yield();
-    }
+            }
         }
     }
 
@@ -74,7 +73,9 @@ public class LocalExposedBonjourService implements Runnable {
 
     public static LocalExposedBonjourService getServiceById(String serviceId) {
         for (LocalExposedBonjourService cbs : services) {
-            if (serviceId.equals(cbs.ColtramServiceId)) return cbs;
+            if (serviceId.equals(cbs.ColtramServiceId)) {
+                return cbs;
+            }
         }
         return null;
     }
@@ -109,13 +110,13 @@ public class LocalExposedBonjourService implements Runnable {
             log.fine("starting coltram bonjour service on port " + serverSocket.getLocalPort() + " id:" + serviceId);
             while (!threadStopper) {
                 Socket socket = serverSocket.accept();
-                log.fine("socket accepted on "+socket.getPort());
+                log.fine("socket accepted on " + socket.getPort());
                 InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String message;
                 while (true) {
                     message = bufferedReader.readLine();
-                    log.fine("BSS receive on port "+socket.getPort()+" :"+message);
+                    log.fine("BSS receive on port " + socket.getPort() + " :" + message);
                     if (message == null) {
                         break;
                     }
@@ -128,8 +129,8 @@ public class LocalExposedBonjourService implements Runnable {
                     } else if ("unsubscribe".equals(purpose)) {
                         unsubscribe(msg);
                     } else {
-                    notifyListeners(message);
-                }
+                        notifyListeners(message);
+                    }
                 }
                 bufferedReader.close();
                 inputStreamReader.close();
@@ -149,7 +150,7 @@ public class LocalExposedBonjourService implements Runnable {
             //System.out.println(new String(text, i, 10));
             len = text[i] & 0xFF;
             j = 0;
-            while (j < len && i+j < text.length && text[i + j] != '=') {
+            while (j < len && i + j < text.length && text[i + j] != '=') {
                 j++;
             }
             if (text[i + j] == '=') {
@@ -185,7 +186,7 @@ public class LocalExposedBonjourService implements Runnable {
                     try {
                         // if is local
                         if (LocalHost.isLocal(cbes.getAddress())) {
-                            log.fine("updateEvent Bonjour local "+eventName);
+                            log.fine("updateEvent Bonjour local " + eventName);
                             JSONObject object = new JSONObject();
                             object.put("purpose", "updateEvent");
                             object.put("eventName", eventName);
@@ -195,7 +196,7 @@ public class LocalExposedBonjourService implements Runnable {
                             topManager.getConnectionManager().getConnection(cbes.getOriginAtom()).send(object.toString());
                         } else {
                             // send update to this listener
-                            log.fine("updateEvent Bonjour remote "+eventName);
+                            log.fine("updateEvent Bonjour remote " + eventName);
                             Socket socket = cbes.getSocket();
                             JSONObject object = new JSONObject();
                             object.put("purpose", "updateEvent");
@@ -204,7 +205,7 @@ public class LocalExposedBonjourService implements Runnable {
                             object.put("callback", cbes.getCallback());
                             //object.put("originAtom", cbes.getOriginAtom());
                             DataOutputStream dos = cbes.getSocketDOS();
-                            dos.writeBytes(object.toString()+"\n");
+                            dos.writeBytes(object.toString() + "\n");
                             dos.flush();
                         }
                     } catch (Exception e) {
@@ -235,7 +236,10 @@ public class LocalExposedBonjourService implements Runnable {
             }
         }
         int lp = -1;
-        try { lp = Integer.parseInt(listenerPort); } catch(Exception e) {}
+        try {
+            lp = Integer.parseInt(listenerPort);
+        } catch (Exception e) {
+        }
         subscriptions.add(new EventSubscription(eventName, callback,
                 address, lp, originAtom));
     }

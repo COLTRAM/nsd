@@ -64,7 +64,6 @@ public class EventSubscription {
         try {
             iaddress = InetAddress.getByName(address);
         } catch (UnknownHostException e) {
-            Thread.yield();
         }
     }
 

@@ -135,7 +135,6 @@ public class UPnPProcessor {
                                 String s = result.toString();
                                 connection.getConnection().send(s);
                             } catch (NotYetConnectedException e) {
-                                Thread.yield();
                             }
                         }
                         log.finer("Successfully called action!");

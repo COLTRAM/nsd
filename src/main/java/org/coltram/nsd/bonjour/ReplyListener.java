@@ -46,7 +46,6 @@ public class ReplyListener implements Runnable {
         } catch (SocketTimeoutException e) {
             log.fine("reply socket timed out");
         } catch (NotYetConnectedException e) {
-            Thread.yield();
         } catch (IOException e) {
             e.printStackTrace();
         }

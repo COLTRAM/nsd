@@ -112,7 +112,7 @@ public class BonjourProcessor {
                            final AtomConnection connection, String callBack) throws JSONException {
         final DiscoveredZCService bonjourService = topManager.getServiceManager().findBonjourService(serviceId);
         if (bonjourService == null) {
-            log.info("no service with id "+serviceId+" in CallAction");
+            log.info("no service with id " + serviceId + " in CallAction");
             return;
         }
         if (bonjourService.isLocal()) {
@@ -125,29 +125,29 @@ public class BonjourProcessor {
             try {
                 Socket socket = bonjourService.getSocket();
                 int replyPort = -1;
-            final InetAddress inetAddress = socket.getInetAddress();
-            if (callBack != null) {
-                // wait for reply on the same socket
+                final InetAddress inetAddress = socket.getInetAddress();
+                if (callBack != null) {
+                    // wait for reply on the same socket
                     ServerSocket serverSocket = connection.getServerSocket();
                     replyPort = serverSocket.getLocalPort();
                     log.finer("start server for reply " + serverSocket.getLocalPort());
                     new Thread(new ReplyListener(serverSocket, connection.getConnection())).start();
-                            Thread.yield();
-                        }
-            String ia = inetAddress.toString();
-            if (ia.startsWith("/")) {
-                ia = ia.substring(1);
-            }
+                    Thread.yield();
+                }
+                String ia = inetAddress.toString();
+                if (ia.startsWith("/")) {
+                    ia = ia.substring(1);
+                }
                 object.put("address", LocalHost.name);
                 object.put("replyPort", replyPort + "");
-            object.put("originAtom", connection.getId());
+                object.put("originAtom", connection.getId());
                 DataOutputStream dos = bonjourService.getSocketDOS();
                 dos.writeBytes(object.toString() + "\n");
-            dos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+                dos.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-    }
     }
 
     private static final char[] _nibbleToHex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
@@ -178,10 +178,10 @@ public class BonjourProcessor {
             random.nextBytes(name);
             ServerSocket serverSocket = new ServerSocket(0);
             int bonjourServicePort = serverSocket.getLocalPort();
-            ServiceInfo si = ServiceInfo.create(type, deviceType+"_"+toHex(name), bonjourServicePort, 0, 0, values);
+            ServiceInfo si = ServiceInfo.create(type, deviceType + "_" + toHex(name), bonjourServicePort, 0, 0, values);
             exposedService = new LocalExposedBonjourService(topManager, serverSocket, si, serviceId, service);
-            topManager.getConnectionManager().getJmdns().registerService(si);
             connection.add(exposedService);
+            topManager.getConnectionManager().getJmdns().registerService(si);
             exposedService.start();
             log.fine("register " + si.getQualifiedName());
         } catch (IOException e) {
@@ -203,7 +203,6 @@ public class BonjourProcessor {
             try {
                 connection.getConnection().send(object.toString());
             } catch (NotYetConnectedException e) {
-                Thread.yield();
             }
         } else {
             try {
