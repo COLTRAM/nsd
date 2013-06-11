@@ -18,19 +18,25 @@
 package org.coltram.nsd.communication;
 
 import org.coltram.nsd.types.LocalHost;
-import pygmy.core.Server;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Properties;
 
-public class HTTPServer extends Server {
-    public static final String webrootName = "tmpwww";
-    public static final String webrootPort = "55005";
+public class HTTPServer extends HttpStaticFileServer {
+    public static final int webrootPort = 55005;
 
-    public HTTPServer(Properties config) {
-        super(config);
+    public HTTPServer() {
+        super(webrootPort);
+        File share = new File("share");
+        if (!share.exists()) {
+            share.mkdir();
+        } else {
+            if (!share.isDirectory()) {
+                share.delete();
+                share.mkdir();
+            }
+        }
     }
 
     /**
@@ -41,7 +47,7 @@ public class HTTPServer extends Server {
      * @return the URL of the resource
      */
     public String addResource(String name, byte content[]) {
-        File res = new File(webrootName + File.separatorChar + name);
+        File res = new File("share" + File.separatorChar + name);
         if (res.exists()) {
             res.delete();
         }
@@ -52,7 +58,7 @@ public class HTTPServer extends Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "http://" + LocalHost.name + ":" + webrootPort + "/" + name;
+        return "http://" + LocalHost.name + ":" + webrootPort + "/share/" + name;
     }
 
 }

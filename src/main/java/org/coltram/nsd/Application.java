@@ -47,7 +47,7 @@ public abstract class Application {
         //
         // setup of web server for bonjour descriptions and other non-UPnP related served filed
         //
-        httpServer = webSetUp(getProperties());
+        httpServer = webSetUp();
         topManager = new TopManager(httpServer);
         agentSetUp(topManager, null);
     }
@@ -68,21 +68,9 @@ public abstract class Application {
         }
     }
 
-    public abstract Properties getProperties();
-
-    public static HTTPServer webSetUp(Properties properties) {
-        File webroot = new File(HTTPServer.webrootName);
-        if (webroot.exists()) {
-            if (webroot.isDirectory()) {
-                for (File f : webroot.listFiles()) {
-                    f.delete();
-                }
-            }
-            webroot.delete();
-        }
-        webroot.mkdir();
-        HTTPServer webServer = new HTTPServer(properties);
-        webServer.start();
+    public static HTTPServer webSetUp() {
+        HTTPServer webServer = new HTTPServer();
+        webServer.run();
         return webServer;
     }
 

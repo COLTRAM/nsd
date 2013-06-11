@@ -848,10 +848,6 @@ var NSDPlusPlus = {};
             }
         }
     };
-
-    NSDPlusPlus.getColtramAgents = function (callback) {
-        NSDPlusPlus.getNetworkServices("upnp:urn:schemas-upnp-org:service:COLTRAMAgent:1", callback);
-    };
 }());
 
 // to maintain the original API

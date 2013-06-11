@@ -39,22 +39,4 @@ public class ConsoleApplication extends Application {
         log.info("+ socket.io-based NSD agent started +");
         log.info("-------------------------------------");
     }
-
-    public Properties getProperties() {
-        Properties properties = new Properties();
-        properties.setProperty("endpoints", "http");
-        properties.setProperty("urlhome", "/");
-        properties.setProperty("http.port", HTTPServer.webrootPort);
-        properties.setProperty("http.class", "pygmy.core.SingleThreadedHttpEndPoint");
-        properties.setProperty("handler", "coltramhandler");
-        properties.setProperty("coltramhandler.class", "pygmy.handlers.FileHandler");
-        properties.setProperty("coltramhandler.root", HTTPServer.webrootName);
-        properties.setProperty("coltramhandler.url-prefix", "/");
-        properties.setProperty("mime.json", "application/json");
-        properties.setProperty("mime.txt", "text/plain");
-        properties.setProperty("resource.class", "org.coltram.nsd.socketio.Handler");
-        properties.setProperty("resource.resourceMount", "/socket.io");
-        properties.setProperty("resource.url-prefix", "/");
-        return properties;
-    }
 }
