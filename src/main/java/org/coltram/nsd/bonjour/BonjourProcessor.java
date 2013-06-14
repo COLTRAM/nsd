@@ -22,7 +22,6 @@ import org.coltram.nsd.communication.TopManager;
 import org.coltram.nsd.types.LocalHost;
 import org.json.JSONException;
 import org.json.JSONObject;
-import pygmy.core.UUID;
 
 import javax.jmdns.ServiceInfo;
 import java.io.*;
@@ -33,6 +32,7 @@ import java.nio.channels.NotYetConnectedException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class BonjourProcessor {
@@ -171,7 +171,7 @@ public class BonjourProcessor {
             final HashMap<String, String> values = new HashMap<String, String>();
             values.put("DName", friendlyName);
             String desc = service.toString();
-            values.put("Desc", topManager.getHttpServer().addResource(UUID.createUUID().toString() + ".json", desc.getBytes()));
+            values.put("Desc", topManager.getHttpServer().addResource(UUID.randomUUID().toString() + ".json", desc.getBytes()));
             values.put("txtvers", "1");
             Random random = new Random();
             byte[] name = new byte[6];

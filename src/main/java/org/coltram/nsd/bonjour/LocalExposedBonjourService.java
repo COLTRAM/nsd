@@ -213,6 +213,8 @@ public class LocalExposedBonjourService implements Runnable {
                     }
                 }
             }
+            // finally, update the event value in the event variable
+            cbev.setEventValue(eventValue);
         }
     }
 

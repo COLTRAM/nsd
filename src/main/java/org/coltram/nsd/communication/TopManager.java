@@ -18,19 +18,12 @@
 package org.coltram.nsd.communication;
 
 import org.coltram.nsd.bonjour.DiscoveredZCService;
-import org.coltram.nsd.upnp.GenericService;
 import org.teleal.cling.UpnpService;
 import org.teleal.cling.model.meta.Device;
-import pygmy.core.Server;
 
 import javax.jmdns.JmDNS;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.channels.NotYetConnectedException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Properties;
 
 public class TopManager {
     private static java.util.logging.Logger log = java.util.logging.Logger.getLogger(TopManager.class.getName());
