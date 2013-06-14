@@ -33,7 +33,7 @@ Please see these blog posts for more information:
 
 This NSD agent uses open source libraries:
 
-- Cling [http://4thline.org/projects/cling/], a UPnP implementation by Christian Bauer at Teleal (LGPL), at
+- Cling [http://4thline.org/projects/cling/], a UPnP implementation by Christian Bauer at Teleal (LGPL).
 
 - JMDNS [http://jmdns.sourceforge.net/], a Bonjour implementation by Arthur van Hoff at Strangeberry (Apache v2 License).
 
