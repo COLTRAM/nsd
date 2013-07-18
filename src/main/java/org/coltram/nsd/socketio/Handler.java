@@ -36,7 +36,7 @@ public class Handler implements ConnectListener, DisconnectListener, DataListene
         this.topManager = topManager;
         this.proxyMessenger = proxyMessenger;
         Configuration config = new Configuration();
-        config.setHostname("localhost");
+        //config.setHostname("localhost");
         config.setPort(0xDEAD);
         socketIOServer = new SocketIOServer(config);
         socketIOServer.addConnectListener(this);
