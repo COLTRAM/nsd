@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>org.teleal.cling</groupId>
-            <artifactId>cling-core-coltram</artifactId>
+            <artifactId>cling-core</artifactId>
             <version>1.0.5</version>
         </dependency>
         <dependency>
