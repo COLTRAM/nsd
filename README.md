@@ -28,24 +28,24 @@ Place the content of the examples directory in the document root of a web server
 Also place a copy of the jslib directory in the document root.
 Also place a copy of the content of bootstrap.zip so that your document root looks like:
 
-drwxr-xr-x   6 admin   204 Mar 13 11:16 bootstrap
--rw-r--r--   1 admin  2135 Aug 19 12:58 callBonjour.socketio.html
--rw-r--r--   1 admin  2035 Aug 19 12:58 callBonjour.websocket.html
--rw-r--r--   1 admin  2573 Aug 19 12:58 callBonjourEvent.socketio.html
--rw-r--r--   1 admin  2220 Aug 19 12:58 callUPnP.socketio.html
--rw-r--r--   1 admin  2120 Aug 19 12:58 callUPnP.websocket.html
--rw-r--r--   1 admin  2658 Aug 19 12:58 callUPnPEvent.socketio.html
--rw-r--r--   1 admin  2639 Aug 19 12:58 discovery.socketio.html
--rw-r--r--   1 admin  2539 Aug 19 12:58 discovery.websocket.html
--rw-r--r--   1 admin  2043 Aug 19 12:58 exposeBonjour.socketio.html
--rw-r--r--   1 admin  1943 Aug 19 12:58 exposeBonjour.websocket.html
--rw-r--r--   1 admin  2048 Aug 19 12:58 exposeBonjourEvent.socketio.html
--rw-r--r--   1 admin  2034 Aug 19 12:58 exposeUPnP.socketio.html
--rw-r--r--   1 admin  1934 Aug 19 12:58 exposeUPnP.websocket.html
--rw-r--r--   1 admin  2039 Aug 19 12:58 exposeUPnPEvent.socketio.html
-drwxr-xr-x  11 admin   374 Aug 19 12:58 js
-drwxr-xr-x   6 admin   204 Aug 19 12:58 jslib
-drwxr-xr-x   4 admin   136 Aug 19 12:58 res
+    drwxr-xr-x   6 admin   204 Mar 13 11:16 bootstrap
+    -rw-r--r--   1 admin  2135 Aug 19 12:58 callBonjour.socketio.html
+    -rw-r--r--   1 admin  2035 Aug 19 12:58 callBonjour.websocket.html
+    -rw-r--r--   1 admin  2573 Aug 19 12:58 callBonjourEvent.socketio.html
+    -rw-r--r--   1 admin  2220 Aug 19 12:58 callUPnP.socketio.html
+    -rw-r--r--   1 admin  2120 Aug 19 12:58 callUPnP.websocket.html
+    -rw-r--r--   1 admin  2658 Aug 19 12:58 callUPnPEvent.socketio.html
+    -rw-r--r--   1 admin  2639 Aug 19 12:58 discovery.socketio.html
+    -rw-r--r--   1 admin  2539 Aug 19 12:58 discovery.websocket.html
+    -rw-r--r--   1 admin  2043 Aug 19 12:58 exposeBonjour.socketio.html
+    -rw-r--r--   1 admin  1943 Aug 19 12:58 exposeBonjour.websocket.html
+    -rw-r--r--   1 admin  2048 Aug 19 12:58 exposeBonjourEvent.socketio.html
+    -rw-r--r--   1 admin  2034 Aug 19 12:58 exposeUPnP.socketio.html
+    -rw-r--r--   1 admin  1934 Aug 19 12:58 exposeUPnP.websocket.html
+    -rw-r--r--   1 admin  2039 Aug 19 12:58 exposeUPnPEvent.socketio.html
+    drwxr-xr-x  11 admin   374 Aug 19 12:58 js
+    drwxr-xr-x   6 admin   204 Aug 19 12:58 jslib
+    drwxr-xr-x   4 admin   136 Aug 19 12:58 res
 
 
 Please see these blog posts for more information:
