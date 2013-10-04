@@ -44,14 +44,17 @@ public class UPnPProcessor {
     private ArrayList<SubscriptionCallback> subscriptions = new ArrayList<SubscriptionCallback>();
 
     private TopManager coltramManager;
-    private GenericService exposedService = null;
 
     public UPnPProcessor(TopManager deviceManager) {
         this.coltramManager = deviceManager;
     }
 
-    public void UpdateEvent(String eventName, String eventValue) {
-        exposedService.setEventValue(eventName, eventValue);
+    public void UpdateEvent(String eventName, String eventValue, String serviceId) {
+        GenericService service = (GenericService)coltramManager.getServiceManager().findService(serviceId);
+        if (service == null) {
+            throw new RuntimeException("updating event without an exposed service");
+        }
+        service.setEventValue(eventName, eventValue);
     }
 
     public void Unsubscribe(String serviceId, String eventName) {
@@ -112,7 +115,6 @@ public class UPnPProcessor {
                     @Override
                     public void success(org.teleal.cling.model.action.ActionInvocation invocation) {
                     	log.finer("ENTERING ActionCallback.success" + " - actionName=" + actionName + ", replyCallBack=" + replyCallBack);
-                    	
                         ActionArgumentValue[] values = invocation.getOutput();
                         if (values != null && values.length > 0 && !"".equals(replyCallBack)) {
                             //
@@ -141,7 +143,7 @@ public class UPnPProcessor {
                             try {
                                 String s = result.toString();
                                 connection.getConnection().send(s);
-                                log.finer("sended " + s);
+                                log.finer("sent " + s);
                             } catch (NotYetConnectedException e) {
                             }
                         }
@@ -168,7 +170,7 @@ public class UPnPProcessor {
             return;
         }
         try {
-            exposedService = new GenericService<GenericService>(ServiceType.valueOf(serviceType.substring(5)),
+            GenericService exposedService = new GenericService<GenericService>(ServiceType.valueOf(serviceType.substring(5)),
                     ServiceId.valueOf(serviceId), actionList, false);
             exposedService.setManager(new ServiceManager<GenericService>(exposedService, GenericService.class));
             LocalDevice newDevice = new LocalDevice(new DeviceIdentity(new UDN(friendlyName)),

@@ -219,10 +219,10 @@ public class ProxyMessenger {
         String serviceId = connection.getExposedService();
         switch (protocol(serviceId)) {
             case protocolUPNP:
-                uPnPProcessor.UpdateEvent(eventName, eventValue);
+                uPnPProcessor.UpdateEvent(eventName, eventValue, serviceId);
                 break;
             case protocolBonjour:
-                bonjourProcessor.UpdateEvent(eventName, eventValue);
+                bonjourProcessor.UpdateEvent(eventName, eventValue, serviceId);
                 break;
             default:
                 log.info("unknown discovery and communication protocol");
