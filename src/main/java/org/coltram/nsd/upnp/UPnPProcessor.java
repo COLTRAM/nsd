@@ -17,21 +17,27 @@
 
 package org.coltram.nsd.upnp;
 
+import java.nio.channels.NotYetConnectedException;
+import java.util.ArrayList;
+
 import org.coltram.nsd.communication.AtomConnection;
 import org.coltram.nsd.communication.TopManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.teleal.cling.controlpoint.ActionCallback;
-import org.teleal.cling.model.DefaultServiceManager;
 import org.teleal.cling.model.ValidationException;
 import org.teleal.cling.model.action.ActionArgumentValue;
 import org.teleal.cling.model.action.ActionInvocation;
 import org.teleal.cling.model.message.UpnpResponse;
-import org.teleal.cling.model.meta.*;
-import org.teleal.cling.model.types.*;
-
-import java.nio.channels.NotYetConnectedException;
-import java.util.ArrayList;
+import org.teleal.cling.model.meta.DeviceDetails;
+import org.teleal.cling.model.meta.DeviceIdentity;
+import org.teleal.cling.model.meta.LocalDevice;
+import org.teleal.cling.model.meta.Service;
+import org.teleal.cling.model.types.DeviceType;
+import org.teleal.cling.model.types.ServiceId;
+import org.teleal.cling.model.types.ServiceType;
+import org.teleal.cling.model.types.UDN;
+import org.teleal.cling.registry.Registry;
 
 public class UPnPProcessor {
     private static java.util.logging.Logger log = java.util.logging.Logger.getLogger(UPnPProcessor.class.getName());
@@ -91,21 +97,22 @@ public class UPnPProcessor {
      */
     private void executeAction(final Service service, final String actionName, JSONObject args, final AtomConnection connection,
                                final String replyCallBack, final boolean mappedReply) {
-        //
+    	log.info("ENTERING executeAction" + " - actionName=" + actionName + ", replyCallBack=" + replyCallBack);
+    	//
         // to avoid a loop in the logging, any reply from COLTRAMAgentLogger is not logged
         //
         final String serviceType = service.getServiceType().toString();
         org.teleal.cling.model.meta.Action action = service.getAction(actionName);
         if (action == null) {
-            log.info("unknown action for this service: " + actionName + " " + service.getReference().toString());
+            log.warning("unknown action for this service: " + actionName + " " + service.getReference().toString());
             return;
         }
-        NSDActionInvocation setTargetInvocation =
-                new NSDActionInvocation(action, args);
-        coltramManager.getConnectionManager().getUpnpService().getControlPoint().execute(
-                new ActionCallback(setTargetInvocation) {
+        NSDActionInvocation setTargetInvocation = new NSDActionInvocation(action, args);
+        coltramManager.getConnectionManager().getUpnpService().getControlPoint().execute(new ActionCallback(setTargetInvocation) {
                     @Override
                     public void success(org.teleal.cling.model.action.ActionInvocation invocation) {
+                    	log.finer("ENTERING ActionCallback.success" + " - actionName=" + actionName + ", replyCallBack=" + replyCallBack);
+                    	
                         ActionArgumentValue[] values = invocation.getOutput();
                         if (values != null && values.length > 0 && !"".equals(replyCallBack)) {
                             //
@@ -122,7 +129,7 @@ public class UPnPProcessor {
                                     result.put("actionName", actionName);
                                 }
                             } catch (JSONException e) {
-                                log.finer("JSON error while building reply (constant header)");
+                            	log.throwing(this.getClass().getName(), "JSON error while building reply (constant header)", e);
                             }
                             for (ActionArgumentValue v : values) {
                                 try {
@@ -134,6 +141,7 @@ public class UPnPProcessor {
                             try {
                                 String s = result.toString();
                                 connection.getConnection().send(s);
+                                log.finer("sended " + s);
                             } catch (NotYetConnectedException e) {
                             }
                         }
@@ -170,8 +178,28 @@ public class UPnPProcessor {
             //Logger.logln("exposeService " + serviceType);
             coltramManager.getConnectionManager().getUpnpService().getRegistry().addDevice(newDevice);
             connection.add(newDevice);
+            log.finer("exposed Service: friendlyName=" + friendlyName + ", type=" + deviceType + ", serviceId=" + serviceId + ", serviceImplementationName=" + serviceImplementationName);
         } catch (ValidationException e) {
             e.printStackTrace();
         }
+    }
+    
+    public void unexposeService(String friendlyName, AtomConnection connection) throws JSONException {
+    	log.finer("unexposeService: friendlyName=" + friendlyName);
+    	Registry reg = coltramManager.getConnectionManager().getUpnpService().getRegistry();
+    	UDN udn = new UDN(friendlyName);
+    	
+    	reg.removeDevice(udn);
+    	
+    	for (LocalDevice device : connection.devices()) {
+    		//log.finer(device.getIdentity().toString());
+    		//log.finer(new DeviceIdentity(new UDN(friendlyName)).toString());
+    		if (device.getIdentity().equals(new DeviceIdentity(new UDN(friendlyName)))) {
+    			log.finer("device removed from connection");
+    			connection.remove(device);
+    			break;
+    		}
+    	}
+    	
     }
 }

@@ -57,19 +57,23 @@ public class WSServer extends WebSocketServer {
         log.finer(conn + ": " + message);
         //if (!message.contains("COLTRAMAgentLogger")) ColtramLogger.logln("in>"+message);
         try {
-            log.finer(message);
             JSONObject object = new JSONObject(message);
             AtomConnection atomConnection = topManager.getConnectionManager().getAtomConnection(conn);
             if (atomConnection == null) {
-                log.info("onMessage with an unknown WebSocket(?)");
+                log.warning("onMessage with an unknown WebSocket(?)");
                 return;
             }
             boolean notBonjour = atomConnection.bonjourServices().isEmpty();
-            if (notBonjour && atomConnection.isWaitingForReply() && object.getString("purpose").equals("reply")) {
-                atomConnection.setReply(object);
-                atomConnection.setWaitingForReply(false);
-            } else if (notBonjour && object.getString("purpose").equals("reply")) {
-                log.info("getting a reply when not expecting one");
+            
+            if (notBonjour && object.getString("purpose").equals("reply")) {
+            	log.finer("REPLY RECEIVED : " + object.toString());
+            	if (atomConnection.isWaitingForReply()) {
+            		log.finer("get the reply for this wait" + object.toString());
+                    atomConnection.setReply(object);
+                    atomConnection.setWaitingForReply(false);
+            	} else {
+            		log.warning("getting a reply when not expecting one" + object.toString());
+            	}
             } else {
                 proxyMessenger.dispatcher(object, conn);
             }
