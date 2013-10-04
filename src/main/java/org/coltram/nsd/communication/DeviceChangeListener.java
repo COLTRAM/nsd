@@ -29,7 +29,7 @@ import javax.jmdns.ServiceTypeListener;
 import java.util.logging.Logger;
 
 public class DeviceChangeListener implements RegistryListener, ServiceListener, ServiceTypeListener {
-    private static Logger log = Logger.getLogger(RegistryListener.class.getName());
+    private static Logger log = Logger.getLogger(DeviceChangeListener.class.getName());
     private ConnectionManager connectionManager;
     private Frame mainFrame;
 

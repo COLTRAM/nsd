@@ -17,14 +17,13 @@
 
 package org.coltram.nsd.upnp;
 
+import java.util.Iterator;
+import java.util.logging.Logger;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.teleal.cling.model.action.ActionInvocation;
-import org.teleal.cling.model.meta.*;
 import org.teleal.cling.model.types.InvalidValueException;
-
-import java.util.Iterator;
-import java.util.logging.Logger;
 
 public class NSDActionInvocation extends ActionInvocation {
     private static Logger log = Logger.getLogger(NSDActionInvocation.class.getName());
@@ -32,19 +31,19 @@ public class NSDActionInvocation extends ActionInvocation {
     @SuppressWarnings("unchecked")
     public NSDActionInvocation(org.teleal.cling.model.meta.Action action, JSONObject args) {
         super(action);
-        log.finer("setInput action:"+action.getName());
+        log.finest("setInput action:"+action.getName());
         try {
             // Throws InvalidValueException if the value is of wrong type
             Iterator keys = args.keys();
             while (keys.hasNext()) {
                 String name = (String)keys.next(), value = args.get(name).toString();
-                log.finer("setInput "+name+" "+value);
+                log.finest("setInput "+name+" "+value);
                 setInput(name, value);
             }
         } catch (JSONException e) {
-            e.printStackTrace(System.err);
+        	log.throwing(this.getClass().getName(), "NSDActionInvocation", e);
         } catch (InvalidValueException ex) {
-            System.err.println(ex.getMessage());
+        	log.throwing(this.getClass().getName(), "NSDActionInvocation", ex);
         }
     }
 }

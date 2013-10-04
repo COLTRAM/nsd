@@ -93,8 +93,13 @@ var NSDPlusPlus = {};
     NSDPlusPlus.ServiceImplementation = function () {
     };
 
-    NSDPlusPlus.nbOfServiceImplementations = function () {
-        return serviceImplementations.length;
+    //NSDPlusPlus.nbOfServiceImplementations = function () {
+    //    return serviceImplementations.length;
+    //};
+    
+    NSDPlusPlus.getImplementation = function (implementationId) {
+    	//console.log("getImplementation", serviceImplementations, implementationId);
+        return serviceImplementations[implementationId];
     };
 
     /////////////////////////////////////////////////////
@@ -117,6 +122,19 @@ var NSDPlusPlus = {};
     //
     NSDPlusPlus.connect = function (host) {
         NSDPlusPlus.logger("connecting to " + host);
+        if (conn) {
+        	var defered = function() {
+        		if (!webSocketConnected) {
+        			setTimeout(function() {
+        				defered();
+        			}, 100);
+        		} else {
+        			socketConnected();
+        		}
+        	};
+        	defered();
+        	return;
+        }
         try {
             conn = new WebSocket(host == null ? "ws://localhost:56797/" : "ws://" + host + ":56797/");
         } catch (e) {
@@ -130,6 +148,7 @@ var NSDPlusPlus = {};
         conn.onerror = errorFunction;
     };
 
+    var webSocketConnected = false;
     //
     // internal: when a socket is connected
     //
@@ -139,10 +158,11 @@ var NSDPlusPlus = {};
         //
         if (connectedCallbacks.length > 0) {
             for (var i = 0; i < connectedCallbacks.length; i++) {
-                connectedCallbacks[i]();
+            	connectedCallbacks[i]();
+            	NSDPlusPlus.removeEventListener("connected", connectedCallbacks[i]);
             }
-            connectedCallbacks = []; // connected call backs are called once only
         }
+        webSocketConnected = true;
     }
 
     //
@@ -188,6 +208,14 @@ var NSDPlusPlus = {};
 
     NSDPlusPlus.resetLog = function () {};
 
+    // allows to keep a unique reference to the server service object
+    var exposeduniqueSequence = 1;
+    var exposeduniqueTimestamp = new Date().getTime();
+    var getExposedUniqueId = function(type, protocol) {
+    	var id = type + "_" + protocol + "_" + exposeduniqueTimestamp + "_" + (exposeduniqueSequence++);
+    	return id;
+    };
+    
     /////////////////////////////////////////////////////
     //// Expose  ////////////////////////////////////////
     /////////////////////////////////////////////////////
@@ -201,6 +229,7 @@ var NSDPlusPlus = {};
         var obj = {};
         obj.purpose = "exposeService";
         obj.localService = {};
+        obj.localService.uniqueId = getExposedUniqueId(type, protocol);
         obj.localService.type = type;
         obj.localService.protocol = protocol;
         obj.localService.actionList = computeServiceDescriptionFromImplementation(serviceImplementation);
@@ -221,6 +250,17 @@ var NSDPlusPlus = {};
         serviceImplementations.push(serviceImplementation);
         obj.serviceImplementation = "" + (serviceImplementations.length - 1);
         conn.send(JSON.stringify(obj));
+        
+        return obj.localService.uniqueId;
+    };
+    NSDPlusPlus.unexpose = function (uniqueId) {
+    	//console.log("unexpose: ", uniqueId);
+		
+		var obj = {};
+		obj.purpose = "unexposeService";
+		obj.localService = {};
+		obj.localService.uniqueId = uniqueId;
+		conn.send(JSON.stringify(obj));
     };
 
     //
@@ -698,11 +738,26 @@ var NSDPlusPlus = {};
     var specificServiceDiscoveredCallbacks = []; //, networkServicesArray = [];
 
     NSDPlusPlus.getNetworkServices = function (serviceType, callBack, errorCallBack) {
-        var result = new NetworkServices();
+    	var discoveredCallback = null;
+    	for (var i = 0; i < specificServiceDiscoveredCallbacks.length; i++) {
+    		if (serviceType == specificServiceDiscoveredCallbacks[i].type) {
+    			discoveredCallback = specificServiceDiscoveredCallbacks[i];
+    			break;
+            }
+    	}
+    	
+    	var networkServices;
+    	
+    	if (discoveredCallback) {
+    		networkServices = discoveredCallback.networkServices;
+    	} else {
+    		networkServices = new NetworkServices();
+    	}
+        
         // look for services already discovered
-        getAlreadyDiscoveredServices(serviceType, callBack, errorCallBack, result);
+        getAlreadyDiscoveredServices(serviceType, callBack, errorCallBack, networkServices);
         // register a callback for future discoveries
-        registerSpecificServicesCallback(serviceType, result);
+        registerSpecificServicesCallback(serviceType, networkServices);
         //networkServicesArray.push(result);
     };
 
@@ -710,8 +765,17 @@ var NSDPlusPlus = {};
         for (var i = 0; i < discoveredServices.length; i++) {
             var service = discoveredServices[i];
             if (service.type == serviceType) {
-                result.push(service);
-                result.servicesAvailable++;
+            	var found = false;
+            	for (var j = 0; j < result.length; j++) {
+            		if (result[j].id == service.id) {
+            			found = true;
+            			break;
+            		}
+            	}
+            	if (!found) {
+            		result.push(service);
+            		//result.servicesAvailable++;
+            	}
             }
         }
     }
@@ -763,12 +827,14 @@ var NSDPlusPlus = {};
         return this.type == service.type;
     };
 
-    NetworkServices.prototype = [];
+    //NetworkServices.prototype = [];
 
     function NetworkServices() {
-        this.servicesAvailable = 0;
-        this.onserviceavailable = null;
-        this.onserviceunavailable = null;
+    	var r = [];
+        r.servicesAvailable = 0;
+        r.onserviceavailable = null;
+        r.onserviceunavailable = null;
+        return r;
     }
 
     NSDPlusPlus.wrapInNetworkServices = function (service) {
@@ -999,5 +1065,5 @@ NSD.getNetworkServices = NSDPlusPlus.getNetworkServices;
 // NSDPlusPlus.discoveredServices is only exposed temporarily to allow the event module
 // to use it. The next line removes that exposure.
 // NSDPlusPlus.discoveredServices = null;
-NSDPlusPlus.connectedCallbacks = null;
+//NSDPlusPlus.connectedCallbacks = null;
 NSDPlusPlus.initializedCallbacks = null;
