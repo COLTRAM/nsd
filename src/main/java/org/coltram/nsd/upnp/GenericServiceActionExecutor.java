@@ -40,6 +40,35 @@ public class GenericServiceActionExecutor extends AbstractActionExecutor {
 		this.serviceImplementationName = serviceImplementationName;
 	}
 
+    @Override
+   	public void execute(final ActionInvocation<LocalService> actionInvocation) {
+   		execute(actionInvocation, null);
+   	}
+
+   	@Override
+   	public void execute(final ActionInvocation<LocalService> actionInvocation, Object o) {
+   		log.finer("ENTERING execute" + " - " + actionInvocation.getAction().getName());
+   		JSONObject object = new JSONObject();
+   		try {
+   			object.put("purpose", "serviceAction");
+   			object.put("implementation", serviceImplementationName);
+   			object.put("actionName", actionInvocation.getAction().getName());
+   			try {
+   				for (ActionArgument<LocalService> argument : actionInvocation.getAction().getInputArguments()) {
+   					ActionArgumentValue<LocalService> inputValue = actionInvocation.getInput(argument);
+   					object.put(argument.getName(), inputValue.toString());
+   				}
+   			} catch (NullPointerException e) {
+   				log.throwing(GenericServiceActionExecutor.class.getName(), "Exception processing arguments of a call to an exposed service: " + actionInvocation.getAction().getName(), e);
+   				return;
+   			}
+   			log.finer("EXECUTING action: " + object.toString());
+   		} catch (JSONException e) {
+   			log.throwing(GenericServiceActionExecutor.class.getName(), "execute", e);
+   		}
+   		syncAction(actionInvocation, connection, object);
+   	}
+
 	/**
 	 * 
 	 * @param actionInvocation
@@ -49,13 +78,10 @@ public class GenericServiceActionExecutor extends AbstractActionExecutor {
 	public synchronized static void syncAction(final ActionInvocation<LocalService> actionInvocation, AtomConnection connection, JSONObject object) {
 		JSONObject call = object;
 		log.finer("ENTERING SYNCHRONIZED BLOCK syncAction" + " - " + call.toString());
-
 		if (actionInvocation.getAction().getOutputArguments().length > 0) {
-			// set the flag that I am waiting for reply, which will redirect the
-			// reply message
+			// set the flag that I am waiting for reply, which will redirect the reply message
 			log.finer("calling an action with reply: " + actionInvocation.getAction().getName());
 			connection.setWaitingForReply(true);
-
 			// send the action command
 			try {
 				String s = object.toString();
@@ -66,7 +92,6 @@ public class GenericServiceActionExecutor extends AbstractActionExecutor {
 			}
 			// while no reply has been received, wait
 			int j = 0;
-
 			long t1 = System.currentTimeMillis();
 			log.finer("Start waiting" + call.toString());
 
@@ -116,36 +141,5 @@ public class GenericServiceActionExecutor extends AbstractActionExecutor {
 				log.throwing(GenericServiceActionExecutor.class.getName(), "syncAction", e);
 			}
 		}
-	}
-
-	@Override
-	public void execute(final ActionInvocation<LocalService> actionInvocation) {
-		execute(actionInvocation, null);
-	}
-
-	@Override
-	public void execute(final ActionInvocation<LocalService> actionInvocation, Object o) {
-		log.finer("ENTERING execute" + " - " + actionInvocation.getAction().getName());
-
-		JSONObject object = new JSONObject();
-		try {
-			object.put("purpose", "serviceAction");
-			object.put("implementation", serviceImplementationName);
-			object.put("actionName", actionInvocation.getAction().getName());
-			try {
-				for (ActionArgument<LocalService> argument : actionInvocation.getAction().getInputArguments()) {
-					ActionArgumentValue<LocalService> inputValue = actionInvocation.getInput(argument);
-					object.put(argument.getName(), inputValue.toString());
-				}
-			} catch (NullPointerException e) {
-				log.throwing(GenericServiceActionExecutor.class.getName(), "Exception processing arguments of a call to an exposed service: " + actionInvocation.getAction().getName(), e);
-				return;
-			}
-			log.finer("EXECUTING action: " + object.toString());
-		} catch (JSONException e) {
-			log.throwing(GenericServiceActionExecutor.class.getName(), "execute", e);
-		}
-
-		syncAction(actionInvocation, connection, object);
 	}
 }
