@@ -2,3 +2,6 @@
 target/
 tmp/
 nsd.iml
+/bin
+/.project
+/.classpath
