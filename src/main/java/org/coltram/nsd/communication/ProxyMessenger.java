@@ -84,7 +84,7 @@ public class ProxyMessenger {
 	private String getFriendlyName(JSONObject object, AtomConnection connection) throws JSONException {
 		final String remoteHost = connection.getConnection().getRemoteHostName();
 		final JSONObject service = object.getJSONObject("localService");
-		final String uniqueId = service.getString("uniqueId");
+		final String uniqueId = service.optString("uniqueId", "id");
 		final String name = uniqueId + "@" + remoteHost;
 		log.finer("getFriendlyName:" + name);
 		return name;
