@@ -18,12 +18,9 @@
 package org.coltram.nsd.communication;
 
 import org.coltram.nsd.bonjour.BonjourProcessor;
-import org.coltram.nsd.types.LocalHost;
 import org.coltram.nsd.upnp.UPnPProcessor;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.nio.channels.NotYetConnectedException;
 
 @SuppressWarnings("unchecked")
 public class ProxyMessenger {
@@ -76,6 +73,22 @@ public class ProxyMessenger {
                 break;
         }
     }
+    
+    /**
+     * 
+     * @param object
+     * @param connection
+     * @return
+     * @throws JSONException
+     */
+	private String getFriendlyName(JSONObject object, AtomConnection connection) throws JSONException {
+		final String remoteHost = connection.getConnection().getRemoteHostName();
+		final JSONObject service = object.getJSONObject("localService");
+		final String uniqueId = service.getString("uniqueId");
+		final String name = uniqueId + "@" + remoteHost;
+		log.finer("getFriendlyName:" + name);
+		return name;
+	}
 
     /**
      * Process purpose:exposeService messages
@@ -85,13 +98,14 @@ public class ProxyMessenger {
      * @throws JSONException as usual when manipulating JSON objects
      */
     private void processExposeService(JSONObject object, AtomConnection connection) throws JSONException {
+    	log.finer("processExposeService" + object.toString());
         JSONObject service = object.getJSONObject("localService");
         String serviceType = service.getString("type");
         String prot = service.getString("protocol");
         int protocol = protocolBonjour;
         if (prot.equalsIgnoreCase("upnp")) protocol = protocolUPNP;
         String serviceId, deviceType;
-        String friendlyName = serviceType;
+        //String friendlyName = serviceType;
         if (protocol == protocolUPNP) {
             serviceId = "urn:coltram-org:serviceId:"+serviceType+":1.1001";
             deviceType = "urn:coltram-org:device:"+serviceType+":1";
@@ -100,18 +114,33 @@ public class ProxyMessenger {
             serviceId = serviceType+":1.1001";
             deviceType = serviceType;
             serviceType = "zeroconf:_"+serviceType+"._tcp.local.";
-            friendlyName = "coltram";
+            //friendlyName = "coltram";
         }
-        friendlyName += "@" + LocalHost.name;
-        connection.setExposedService(serviceId);
-        if (serviceType.startsWith("zeroconf:")) {
-            bonjourProcessor.exposeService(serviceType, friendlyName, deviceType,
-                                           service, serviceId, connection);
-        } else if (serviceType.startsWith("upnp:")) {
-            uPnPProcessor.exposeService(serviceType, friendlyName, deviceType,
-                                        service, serviceId, connection, object.getString("serviceImplementation"));
-        } else {
-            log.info("unimplemented service type:" + serviceType);
+        
+        final String friendlyName = getFriendlyName(object, connection);
+        
+		connection.setExposedService(serviceId);
+		if (serviceType.startsWith("zeroconf:")) {
+			bonjourProcessor.exposeService(serviceType, friendlyName, deviceType, service, serviceId, connection);
+		} else if (serviceType.startsWith("upnp:")) {
+			uPnPProcessor.exposeService(serviceType, friendlyName, deviceType, service, serviceId, connection, object.getString("serviceImplementation"));
+		} else {
+			log.info("unimplemented service type:" + serviceType);
+		}
+    }
+    
+    /**
+     * 
+     * @param object
+     * @param connection
+     * @throws JSONException
+     */
+    private void processUnexposeService(JSONObject object, AtomConnection connection) throws JSONException {
+    	log.finer("processUnexposeService" + object.toString());
+    	final String friendlyName = getFriendlyName(object, connection);
+        
+        if (friendlyName.contains("upnp")) {
+            uPnPProcessor.unexposeService(friendlyName, connection);
         }
     }
 
@@ -138,6 +167,8 @@ public class ProxyMessenger {
             processCallAction(object, ac, true);
         } else if (purpose.compareTo("exposeService") == 0) {
             processExposeService(object, ac);
+        } else if (purpose.compareTo("unexposeService") == 0) {
+            processUnexposeService(object, ac);
         } else if (purpose.compareTo("updateEvent") == 0) {
             processUpdateEvent(object, ac);
         } else if (purpose.compareTo("subscribe") == 0) {

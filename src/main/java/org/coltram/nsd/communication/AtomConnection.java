@@ -70,6 +70,9 @@ public class AtomConnection implements BonjourServiceListener {
     public void add(LocalDevice d) {
         associatedDevices.add(d);
     }
+    public void remove(LocalDevice d) {
+        associatedDevices.remove(d);
+    }
 
     public void add(LocalExposedBonjourService coltramBonjourService) {
         bonjourServices.add(coltramBonjourService);
