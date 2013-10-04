@@ -99,6 +99,13 @@ public class LocalExposedBonjourService implements Runnable {
         }
     }
 
+    public void unregisterListener(BonjourServiceListener listener) {
+        if (listeners.contains(listener)) {
+            listeners.remove(listener);
+            //log.info("added listener "+listener+" to "+this);
+        }
+    }
+
     public void notifyListeners(String message) {
         for (BonjourServiceListener l : listeners) {
             l.receive(message);

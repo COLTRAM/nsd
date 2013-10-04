@@ -39,15 +39,15 @@ public class BonjourProcessor {
     private static Logger log = Logger.getLogger(BonjourProcessor.class.getName());
 
     private TopManager topManager;
-    private LocalExposedBonjourService exposedService = null;
     private ArrayList<EventListener> listeners = new ArrayList<EventListener>();
 
     public BonjourProcessor(TopManager topManager) {
         this.topManager = topManager;
     }
 
-    public void UpdateEvent(String eventName, String eventValue) {
+    public void UpdateEvent(String eventName, String eventValue, String serviceId) {
         //log.info("updateEvent Bonjour "+eventName);
+        LocalExposedBonjourService exposedService = LocalExposedBonjourService.getServiceById(serviceId);
         if (exposedService == null) {
             throw new RuntimeException("updating event without an exposed service");
         }
@@ -179,7 +179,7 @@ public class BonjourProcessor {
             ServerSocket serverSocket = new ServerSocket(0);
             int bonjourServicePort = serverSocket.getLocalPort();
             ServiceInfo si = ServiceInfo.create(type, deviceType + "_" + toHex(name), bonjourServicePort, 0, 0, values);
-            exposedService = new LocalExposedBonjourService(topManager, serverSocket, si, serviceId, service);
+            LocalExposedBonjourService exposedService = new LocalExposedBonjourService(topManager, serverSocket, si, serviceId, service);
             connection.add(exposedService);
             topManager.getConnectionManager().getJmdns().registerService(si);
             exposedService.start();
@@ -187,6 +187,15 @@ public class BonjourProcessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void unexposeService(String serviceId, AtomConnection connection) throws JSONException {
+        LocalExposedBonjourService exposedService = LocalExposedBonjourService.getServiceById(serviceId);
+        ServiceInfo si = exposedService.getServiceInfo();
+        exposedService.stop();
+        connection.remove(exposedService);
+        topManager.getConnectionManager().getJmdns().unregisterService(si);
+        log.fine("register " + si.getQualifiedName());
     }
 
     /**

@@ -137,11 +137,14 @@ public class ProxyMessenger {
      */
     private void processUnexposeService(JSONObject object, AtomConnection connection) throws JSONException {
     	log.finer("processUnexposeService" + object.toString());
-    	final String friendlyName = getFriendlyName(object, connection);
-        
-        if (friendlyName.contains("upnp")) {
-            uPnPProcessor.unexposeService(friendlyName, connection);
-        }
+        String serviceId = connection.getExposedService();
+        if (serviceId.contains("upnp")) {
+            uPnPProcessor.unexposeService(serviceId, connection);
+        } else if (serviceId.startsWith("zeroconf:")) {
+                    bonjourProcessor.unexposeService(serviceId, connection);
+                } else {
+                    log.severe("unknown discovery and communication protocol");
+                }
     }
 
     /**
