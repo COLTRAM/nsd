@@ -63,20 +63,7 @@ public class WSServer extends WebSocketServer {
                 log.warning("onMessage with an unknown WebSocket(?)");
                 return;
             }
-            boolean notBonjour = atomConnection.bonjourServices().isEmpty();
-            
-            if (notBonjour && object.getString("purpose").equals("reply")) {
-            	log.finer("REPLY RECEIVED : " + object.toString());
-            	if (atomConnection.isWaitingForReply()) {
-            		log.finer("get the reply for this wait" + object.toString());
-                    atomConnection.setReply(object);
-                    atomConnection.setWaitingForReply(false);
-            	} else {
-            		log.warning("getting a reply when not expecting one" + object.toString());
-            	}
-            } else {
-                proxyMessenger.dispatcher(object, conn);
-            }
+            proxyMessenger.dispatcher(object, conn);
         } catch (JSONException e) {
             e.printStackTrace();
         }

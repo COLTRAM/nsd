@@ -180,13 +180,29 @@ public class ProxyMessenger {
             processUnsubscribe(object, ac);
         } else if (purpose.compareTo("reply") == 0) {
             // this is a reply sent by a Bonjour service
-            bonjourProcessor.processReply(object);
+            processReply(object, ac);
         } else {
             //
             // message not understood
             //
             //ColtramLogger.logln("websockets message to proxy not understood: " + purpose);
             log.info("Purpose " + purpose + " not understood");
+        }
+    }
+
+    private void processReply(JSONObject object, AtomConnection connection) throws JSONException {
+        boolean notBonjour = connection.bonjourServices().isEmpty();
+        if (notBonjour && object.getString("purpose").equals("reply")) {
+            log.finer("REPLY RECEIVED : " + object.toString());
+           	if (connection.isWaitingForReply()) {
+           		log.finer("get the reply for this wait" + object.toString());
+                   connection.setReply(object);
+                   connection.setWaitingForReply(false);
+           	} else {
+           		log.warning("getting a reply when not expecting one" + object.toString());
+           	}
+        } else {
+            bonjourProcessor.processReply(object);
         }
     }
 
