@@ -27,7 +27,7 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.NotYetConnectedException;
 
 public class ReplyListener implements Runnable {
-    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger("ReplyListener");
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(ReplyListener.class.getName());
     private ServerSocket serverSocket;
     private Connection connection;
 

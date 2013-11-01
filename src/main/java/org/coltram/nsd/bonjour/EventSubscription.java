@@ -24,7 +24,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class EventSubscription {
-    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger("EventSubscription");
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(EventSubscription.class.getName());
     private String eventName;
     private String callback;
     private String address;

@@ -18,16 +18,12 @@
 package org.coltram.nsd.socketio;
 
 import org.coltram.nsd.Application;
-import org.coltram.nsd.communication.HTTPServer;
 import org.coltram.nsd.communication.ProxyMessenger;
-import org.coltram.nsd.debug.Configuration;
-
-import java.util.Properties;
 
 public class ConsoleApplication extends Application {
 
     public static void main(String args[]) {
-        Configuration.loggerConfiguration(args);
+        //Configuration.loggerConfiguration(args);
         new ConsoleApplication().waitFor();
     }
 

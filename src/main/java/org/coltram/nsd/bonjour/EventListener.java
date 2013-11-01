@@ -26,7 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class EventListener implements Runnable {
-    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger("EventListener");
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(EventListener.class.getName());
     private Thread thread;
     private boolean threadStopper = false;
     private ServerSocket serverSocket;

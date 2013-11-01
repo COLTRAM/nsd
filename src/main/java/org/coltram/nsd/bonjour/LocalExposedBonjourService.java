@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class LocalExposedBonjourService implements Runnable {
-    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger("LocalExposedBonjourService");
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LocalExposedBonjourService.class.getName());
     private ServiceInfo serviceInfo;
     private String serviceId;
     private String ColtramServiceId;

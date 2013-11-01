@@ -23,22 +23,26 @@ import java.util.logging.LogRecord;
 public class OneLiner extends Formatter{
     public String format(LogRecord record) {
         StringBuilder sb = new StringBuilder();
-        sb.append(record.getLevel().getName().substring(0,4));
+        sb.append(max5(record.getLevel().getName()));
         sb.append(" ");
         String s = record.getSourceClassName();
         int len = s.length();
-        if (len > 20) {
+        if (len > 60) {
             sb.append("...");
-            sb.append(s.substring(len-18, len));
+            sb.append(s.substring(len-58, len));
         }
         else sb.append(s);
         sb.append(" ");
         sb.append(record.getSourceMethodName());
         sb.append(" ");
-        while (sb.length() < 49) sb.append(".");
+        while (sb.length() < 90) sb.append(".");
         sb.append(" ");
         sb.append(record.getMessage());
         sb.append("\n");
         return sb.toString();
+    }
+
+    private static String max5(String s) {
+        return (s+"     ").substring(0, 5);
     }
 }

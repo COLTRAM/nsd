@@ -45,10 +45,13 @@ public class ServiceManager {
      * @return the service object
      */
     public Service findService(String serviceId) {
+        log.finer("looking for "+serviceId);
         synchronized (topManager.getDevices()) {
             for (Device d : topManager.getDevices()) {
+                log.finer("checking device "+d.getIdentity().getUdn().getIdentifierString());
                 if (serviceId.startsWith(d.getIdentity().getUdn().getIdentifierString())) {
                     for (Service s : d.getServices()) {
+                        log.finer("checking service "+s.getReference().getServiceId().toString());
                         if (serviceId.endsWith(s.getReference().getServiceId().toString())) {
                             return s;
                         }

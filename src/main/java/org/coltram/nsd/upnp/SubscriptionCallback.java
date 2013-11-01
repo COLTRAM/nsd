@@ -71,12 +71,13 @@ public class SubscriptionCallback extends org.teleal.cling.controlpoint.Subscrip
     }
 
     public void eventReceived(GENASubscription sub) {
-        log.finer("event UPnP " + eventName);
         Map<String, StateVariableValue> values = sub.getCurrentValues();
         StateVariableValue value = values.get(eventName);
+        log.fine("event UPnP " + eventName + " |" + value.toString() + "|");
         JSONObject obj = new JSONObject();
         try {
             obj.put("purpose", "updateEvent");
+            obj.put("eventName", eventName);
             obj.put("eventValue", value.toString());
             obj.put("callback", callback);
             connection.getConnection().send(obj.toString());
@@ -86,5 +87,6 @@ public class SubscriptionCallback extends org.teleal.cling.controlpoint.Subscrip
     }
 
     public void eventsMissed(GENASubscription sub, int numberOfMissedEvents) {
+        log.finer("events missed");
     }
 }
