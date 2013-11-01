@@ -15,45 +15,59 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-NSDPlusPlus.logger = function (s) {
-    var ta = document.getElementById("ta");
-    ta.textContent = s + "\n" + ta.textContent;
-};
-
-var service = null;
-
-function switchOn() {
-    if (service != null) {
-        service.lightSwitch(true);
+require.config({
+    paths: {
+        NSDPlusPlus: "nsdLib",
+        NSDPlusPlusSIO: "nsdLibSocketIO",
+        jQuery: "../bootstrap/js/jQuery-1.8.2.min",
+        bootstrap: "../bootstrap/js/bootstrap.min"
     }
-}
+});
 
-function switchOff() {
-    if (service != null) {
-        service.lightSwitch(false);
+require(["NSDPlusPlus", "when", "jQuery", "bootstrap"], function (NSDPlusPlus, when, $, _) {
+    NSDPlusPlus.logger = function (s) {
+        var ta = document.getElementById("ta");
+        ta.textContent = s + "\n" + ta.textContent;
+    };
+
+    var service = null;
+
+    window.switchOn = function() {
+        if (service != null) {
+            service.lightSwitch(true);
+        }
+    };
+
+    window.switchOff = function() {
+        if (service != null) {
+            service.lightSwitch(false);
+        }
+    };
+
+    function CB(services) {
+        NSDPlusPlus.logger("CB " + services.length);
+        services.onserviceavailable.then(onserviceavailable);
+        if (services.length > 0) {
+            // select first of matching services, only one is supposed to match anyway
+            service = NSDPlusPlus.bindService(services[0].id);
+        }
     }
-}
 
-function CB(services) {
-    NSDPlusPlus.logger("CB " + services.length);
-    services.onserviceavailable = onserviceavailable;
-    if (services.length > 0) {
-        // select first of matching services, only one is supposed to match anyway
-        service = NSDPlusPlus.bindService(services[0].id);
+    function onserviceavailable() {
+        NSDPlusPlus.logger("onserviceavailable callback");
+        NSD.getNetworkServices("zeroconf:_communicationtest._tcp.local.").then(CB);
     }
-}
 
-function onserviceavailable() {
-    NSDPlusPlus.logger("onserviceavailable callback");
-    NSD.getNetworkServices("zeroconf:_communicationtest._tcp.local.", CB);
-}
+    function connectedCB() {
+        NSDPlusPlus.logger("connected");
+        NSD.getNetworkServices("zeroconf:_communicationtest._tcp.local.").then(CB);
+    }
 
-function connectedCB() {
-    NSDPlusPlus.logger("connected");
-    NSD.getNetworkServices("zeroconf:_communicationtest._tcp.local.", CB);
-}
+    require(["domReady"], function (domReady) {
+        domReady(function(){
+            NSDPlusPlus.connected.then(connectedCB);
+            NSDPlusPlus.connect();
+        });
+    });
 
-window.onload = function () {
-    NSDPlusPlus.addEventListener("connected", connectedCB);
-    NSDPlusPlus.connect();
-}
+});

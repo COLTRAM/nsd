@@ -15,27 +15,40 @@
  * This notice must stay in all subsequent versions of this code.
  */
 
-NSDPlusPlus.logger = function (s) {
-    var ta = document.getElementById("ta");
-    ta.textContent = s + "\n" + ta.textContent;
-};
-
-var serviceImplementation = new NSDPlusPlus.ServiceImplementation();
-
-serviceImplementation.lightSwitch = function (newTargetValue) {
-    NSDPlusPlus.logger("Sw:" + newTargetValue + "\n");
-    if (newTargetValue == false) {
-        document.getElementById("light").style.cssText = "background-image: url('res/Lightbulb_off.svg')";
-    } else {
-        document.getElementById("light").style.cssText = "background-image: url('res/lightOn.svg')";
+require.config({
+    paths: {
+        NSDPlusPlus: "nsdLib",
+        NSDPlusPlusSIO: "nsdLibSocketIO",
+        jQuery: "../bootstrap/js/jQuery-1.8.2.min",
+        bootstrap: "../bootstrap/js/bootstrap.min"
     }
-};
+});
 
+require(["NSDPlusPlus", "when", "jQuery", "bootstrap"], function (NSDPlusPlus, when, $, _) {
+    NSDPlusPlus.logger = function (s) {
+        var ta = document.getElementById("ta");
+        ta.textContent = s + "\n" + ta.textContent;
+    };
 
-window.onload = function () {
-    NSDPlusPlus.addEventListener('connected', function () {
-        NSDPlusPlus.expose("communicationtest", "zeroconf", serviceImplementation);
-        NSDPlusPlus.logger("Bonjour service 'communicationtest' exposed");
+    var serviceImplementation = new NSDPlusPlus.ServiceImplementation();
+
+    serviceImplementation.lightSwitch = function (newTargetValue) {
+        NSDPlusPlus.logger("Sw:" + newTargetValue + "\n");
+        if (newTargetValue == false) {
+            document.getElementById("light").style.cssText = "background-image: url('res/Lightbulb_off.svg')";
+        } else {
+            document.getElementById("light").style.cssText = "background-image: url('res/lightOn.svg')";
+        }
+    };
+
+    require(["domReady"], function (domReady) {
+        domReady(function () {
+            NSDPlusPlus.connected.then(function () {
+                NSDPlusPlus.expose("communicationtest", "zeroconf", serviceImplementation);
+                NSDPlusPlus.logger("Bonjour service 'communicationtest' exposed");
+            });
+            NSDPlusPlus.connect();
+        });
     });
-    NSDPlusPlus.connect();
-};
+
+});
