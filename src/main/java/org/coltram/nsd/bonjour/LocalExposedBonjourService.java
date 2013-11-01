@@ -72,8 +72,10 @@ public class LocalExposedBonjourService implements Runnable {
     }
 
     public static LocalExposedBonjourService getServiceById(String serviceId) {
+        log.finer("looking for "+serviceId);
         for (LocalExposedBonjourService cbs : services) {
-            if (serviceId.equals(cbs.ColtramServiceId)) {
+            log.finer("checking against "+cbs.serviceId);
+            if (serviceId.equals(cbs.serviceId)) {
                 return cbs;
             }
         }
@@ -81,13 +83,16 @@ public class LocalExposedBonjourService implements Runnable {
     }
 
     public void start() {
+        log.finer("bonjour service start called");
         if (thread == null) {
             thread = new Thread(this);
             thread.start();
+            log.finer("bonjour service actual start");
         }
     }
 
     public void stop() {
+        log.finer("bonjour service stop called");
         if (thread != null) {
             threadStopper = true;
         }
@@ -143,6 +148,7 @@ public class LocalExposedBonjourService implements Runnable {
                 inputStreamReader.close();
                 socket.close();
             }
+            log.finer("bonjour service actually stopped");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -172,7 +178,7 @@ public class LocalExposedBonjourService implements Runnable {
 
     public void updateEvent(String eventName, String eventValue) {
         // get the event variable
-        log.finer("update " + eventName + "=" + eventValue);
+        log.fine("zc ev update " + eventName + "=" + eventValue);
         EventVariable cbev = null;
         for (EventVariable c : eventVariables) {
             if (eventName.equals(c.getEventName())) {
@@ -182,6 +188,7 @@ public class LocalExposedBonjourService implements Runnable {
         }
         if (cbev == null) {
             // wrong event name
+            log.severe("wrong event name for this service: " + eventName);
             throw new RuntimeException("wrong event name for this service: " + eventName);
         }
         // check if the value changed really
@@ -241,6 +248,7 @@ public class LocalExposedBonjourService implements Runnable {
                     address.equals(cbse.getAddress()) &&
                     listenerPort.equals(cbse.getListenerPort()) &&
                     originAtom.equals(cbse.getOriginAtom())) {
+                log.fine("duplicate subscription");
                 return;
             }
         }
@@ -249,6 +257,7 @@ public class LocalExposedBonjourService implements Runnable {
             lp = Integer.parseInt(listenerPort);
         } catch (Exception e) {
         }
+        log.fine("actual subscription");
         subscriptions.add(new EventSubscription(eventName, callback,
                 address, lp, originAtom));
     }
@@ -258,16 +267,18 @@ public class LocalExposedBonjourService implements Runnable {
         String eventName = object.getString("eventName");
         log.fine("unsubscribe " + eventName);
         String address = object.getString("address");
-        String callback = object.getString("callback");
+        //String callback = object.getString("callback");
         String originAtom = object.getString("originAtom");
         for (EventSubscription cbse : subscriptions) {
             if (eventName.equals(cbse.getEventName()) &&
                     address.equals(cbse.getAddress()) &&
-                    callback.equals(cbse.getCallback()) &&
+                    //callback.equals(cbse.getCallback()) &&
                     originAtom.equals(cbse.getOriginAtom())) {
                 subscriptions.remove(cbse);
+                log.fine("found and removed actual subscription");
                 return;
             }
         }
+        log.fine("no subscription found to remove");
     }
 }

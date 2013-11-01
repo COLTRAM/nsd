@@ -158,7 +158,7 @@ public class UPnPProcessor {
     }
 
     public void exposeService(String serviceType, String friendlyName, String deviceType,
-                              JSONObject service, String serviceId, AtomConnection connection,
+                              String serviceId, JSONObject service, AtomConnection connection,
                               String serviceImplementationName) throws JSONException {
         ActionList actionList;
         try {
@@ -179,7 +179,11 @@ public class UPnPProcessor {
             //Logger.logln("exposeService " + serviceType);
             coltramManager.getConnectionManager().getUpnpService().getRegistry().addDevice(newDevice);
             connection.add(newDevice);
-            log.finer("exposed Service: friendlyName=" + friendlyName + ", type=" + deviceType + ", serviceId=" + serviceId + ", serviceImplementationName=" + serviceImplementationName);
+            serviceId = newDevice.getIdentity().getUdn().getIdentifierString() +
+                    exposedService.getReference().getServiceId().toString();
+            connection.setExposedService(serviceId);
+            log.finer("exposed Service: friendlyName=" + friendlyName + ", type=" + deviceType + ", serviceId=" +
+                    serviceId + ", serviceImplementationName=" + serviceImplementationName);
         } catch (ValidationException e) {
             e.printStackTrace();
         }

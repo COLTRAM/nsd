@@ -165,7 +165,7 @@ public class BonjourProcessor {
     }
 
     public void exposeService(String serviceType, String friendlyName, String deviceType,
-                              JSONObject service, String serviceId, AtomConnection connection) throws JSONException {
+                              JSONObject service, AtomConnection connection) throws JSONException {
         try {
             String type = serviceType.substring(9);
             final HashMap<String, String> values = new HashMap<String, String>();
@@ -179,10 +179,12 @@ public class BonjourProcessor {
             ServerSocket serverSocket = new ServerSocket(0);
             int bonjourServicePort = serverSocket.getLocalPort();
             ServiceInfo si = ServiceInfo.create(type, deviceType + "_" + toHex(name), bonjourServicePort, 0, 0, values);
-            LocalExposedBonjourService exposedService = new LocalExposedBonjourService(topManager, serverSocket, si, serviceId, service);
+            LocalExposedBonjourService exposedService = new LocalExposedBonjourService(topManager, serverSocket, si,
+                    si.getQualifiedName(), service);
             connection.add(exposedService);
             topManager.getConnectionManager().getJmdns().registerService(si);
             exposedService.start();
+            connection.setExposedService(si.getQualifiedName());
             log.fine("register " + si.getQualifiedName());
         } catch (IOException e) {
             e.printStackTrace();

@@ -104,26 +104,22 @@ public class ProxyMessenger {
         String prot = service.getString("protocol");
         int protocol = protocolBonjour;
         if (prot.equalsIgnoreCase("upnp")) protocol = protocolUPNP;
-        String serviceId, deviceType;
+        String deviceType, serviceId=null;
         //String friendlyName = serviceType;
         if (protocol == protocolUPNP) {
-            serviceId = "urn:coltram-org:serviceId:"+serviceType+":1.1001";
             deviceType = "urn:coltram-org:device:"+serviceType+":1";
+            serviceId = "urn:coltram-org:serviceId:"+serviceType+":1.1001";
             serviceType = "upnp:urn:coltram-org:service:"+serviceType+":1";
         } else {
-            serviceId = serviceType+":1.1001";
             deviceType = serviceType;
             serviceType = "zeroconf:_"+serviceType+"._tcp.local.";
             //friendlyName = "coltram";
         }
-        
         final String friendlyName = getFriendlyName(object, connection);
-        
-		connection.setExposedService(serviceId);
 		if (serviceType.startsWith("zeroconf:")) {
-			bonjourProcessor.exposeService(serviceType, friendlyName, deviceType, service, serviceId, connection);
+			bonjourProcessor.exposeService(serviceType, friendlyName, deviceType, service, connection);
 		} else if (serviceType.startsWith("upnp:")) {
-			uPnPProcessor.exposeService(serviceType, friendlyName, deviceType, service, serviceId, connection, object.getString("serviceImplementation"));
+			uPnPProcessor.exposeService(serviceType, friendlyName, deviceType, serviceId, service, connection, object.getString("serviceImplementation"));
 		} else {
 			log.info("unimplemented service type:" + serviceType);
 		}
