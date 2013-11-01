@@ -18,6 +18,7 @@
 package org.coltram.nsd.communication;
 
 import org.coltram.nsd.bonjour.BonjourProcessor;
+import org.coltram.nsd.types.LocalHost;
 import org.coltram.nsd.upnp.UPnPProcessor;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -84,10 +85,15 @@ public class ProxyMessenger {
 		final String remoteHost = connection.getConnection().getRemoteHostName();
 		final JSONObject service = object.getJSONObject("localService");
 		final String uniqueId = service.optString("uniqueId", "id");
-		final String name = uniqueId + "@" + remoteHost;
+		final String name = uniqueId + "@" + tryToAvoidLocalHost(remoteHost);
 		log.finer("getFriendlyName:" + name);
 		return name;
 	}
+
+    private String tryToAvoidLocalHost(String s) {
+        if (s.compareToIgnoreCase("localhost") == 0) return LocalHost.name;
+        return s;
+    }
 
     /**
      * Process purpose:exposeService messages
