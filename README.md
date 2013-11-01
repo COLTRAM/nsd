@@ -1,7 +1,6 @@
-nsd
-===
+# nsd
 
-Network Service Discovery API implementation
+##Network Service Discovery API implementation
 
 I have implemented the Network Service Discovery API [http://www.w3.org/TR/discovery-api/] 
 on top of UPnP and Bonjour as a Java proxy for any modern browser, coupled with a JS library. 
@@ -10,6 +9,15 @@ This has been tested on PCs and Macs, with recent versions of Chrome, Firefox, S
 It also works on Windows 7/IE10. Linux should not be a problem, but was not tested.
 
 The project structure is compatible with Maven, and a pom.xml is provided.
+
+## What's new
+
+Version 2:
+- Latest NSD draft as of Nov 1, 2013, with one modification: onservice[un]available are not callbacks but promises
+- Many bug fixes
+- Refactoring
+
+## Quick start
 
 Run the agent in a terminal with the command line:
 
@@ -25,7 +33,7 @@ Running the agent in the terminal is necessary if you want to see the error log.
 Run the agent before you load any of the examples in a browser.
 
 Place the content of the examples directory in the document root of a web server.
-Also place a copy of the jslib directory in the document root.
+Also place a copy of the js directory in the document root.
 Also place a copy of the content of bootstrap.zip so that your document root looks like:
 
     drwxr-xr-x   6 admin   204 Mar 13 11:16 bootstrap
@@ -44,9 +52,9 @@ Also place a copy of the content of bootstrap.zip so that your document root loo
     -rw-r--r--   1 admin  1934 Aug 19 12:58 exposeUPnP.websocket.html
     -rw-r--r--   1 admin  2039 Aug 19 12:58 exposeUPnPEvent.socketio.html
     drwxr-xr-x  11 admin   374 Aug 19 12:58 js
-    drwxr-xr-x   6 admin   204 Aug 19 12:58 jslib
     drwxr-xr-x   4 admin   136 Aug 19 12:58 res
 
+## More information
 
 Please see these blog posts for more information:
 
@@ -67,5 +75,9 @@ This NSD agent uses open source libraries:
 maintainable high performance protocol servers and clients (Apache License v2).
 
 - netty-socketio [https://github.com/mrniko/netty-socketio], a socket.io server designed on top of netty (Apache License v2).
+
+- when.js [https://github.com/cujojs/when], a Promise/A+ implementation (MIT)
+
+- require.js [http://requirejs.org/], a package system for JS (MIT)
 
 The examples use Bootstrap (Apache v2 license) and jQuery (MIT License).
