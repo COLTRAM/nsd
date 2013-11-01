@@ -45,8 +45,8 @@ public class BonjourProcessor {
         this.topManager = topManager;
     }
 
-    public void UpdateEvent(String eventName, String eventValue, String serviceId) {
-        //log.info("updateEvent Bonjour "+eventName);
+    public void updateEvent(String eventName, String eventValue, String serviceId) {
+        log.fine("updateEvent Bonjour "+eventName);
         LocalExposedBonjourService exposedService = LocalExposedBonjourService.getServiceById(serviceId);
         if (exposedService == null) {
             throw new RuntimeException("updating event without an exposed service");
@@ -54,14 +54,14 @@ public class BonjourProcessor {
         exposedService.updateEvent(eventName, eventValue);
     }
 
-    public void Xscribe(JSONObject object, String serviceId, AtomConnection connection)
+    public void xscribe(JSONObject object, String serviceId, AtomConnection connection)
             throws JSONException {
-        log.finer("xscribe Bonjour " + object.getString("eventName"));
         final DiscoveredZCService bonjourService = topManager.getServiceManager().findBonjourService(serviceId);
         if (bonjourService == null) {
             log.info("no service with id " + serviceId + " in un/subscribe");
             return;
         }
+        log.finer("xscribe Bonjour " + object.getString("eventName")+" local?"+bonjourService.isLocal());
         if (bonjourService.isLocal()) {
             // find the LocalExposedBonjourService in question
             LocalExposedBonjourService localcbs = LocalExposedBonjourService.getServiceById(serviceId);
@@ -108,11 +108,11 @@ public class BonjourProcessor {
         }
     }
 
-    public void CallAction(JSONObject object, String serviceId,
+    public void callAction(JSONObject object, String serviceId,
                            final AtomConnection connection, String callBack) throws JSONException {
         final DiscoveredZCService bonjourService = topManager.getServiceManager().findBonjourService(serviceId);
         if (bonjourService == null) {
-            log.info("no service with id " + serviceId + " in CallAction");
+            log.info("no service with id " + serviceId + " in callAction");
             return;
         }
         if (bonjourService.isLocal()) {
