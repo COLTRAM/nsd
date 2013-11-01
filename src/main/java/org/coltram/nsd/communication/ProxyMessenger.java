@@ -52,10 +52,9 @@ public class ProxyMessenger {
      *
      * @param object      the JSON message
      * @param connection  the incoming connection, to be able to reply if necessary
-     * @param mappedReply whether the reply needs to be with separate parameters or one object with attributes
      * @throws JSONException as usual when manipulating JSON objects
      */
-    private void processCallAction(JSONObject object, final AtomConnection connection, boolean mappedReply)
+    private void processCallAction(JSONObject object, final AtomConnection connection)
             throws JSONException {
         String actionName = object.getString("actionName");
         String serviceId = object.getString("serviceId");
@@ -63,10 +62,10 @@ public class ProxyMessenger {
         String callBack = object.optString("replyCallBack");
         switch (protocol(serviceId)) {
             case protocolUPNP:
-                uPnPProcessor.CallAction(serviceId, actionName, arguments, connection, callBack, mappedReply);
+                uPnPProcessor.callAction(serviceId, actionName, arguments, connection, callBack);
                 break;
             case protocolBonjour:
-                bonjourProcessor.CallAction(object, serviceId, connection, callBack);
+                bonjourProcessor.callAction(object, serviceId, connection, callBack);
                 break;
             default:
                 log.info("unknown discovery and communication protocol");
@@ -161,9 +160,7 @@ public class ProxyMessenger {
         log.finer(object.toString());
         String purpose = object.getString("purpose");
         if (purpose.compareTo("callAction") == 0) {
-            processCallAction(object, ac, false);
-        } else if (purpose.compareTo("callAction2") == 0) {
-            processCallAction(object, ac, true);
+            processCallAction(object, ac);
         } else if (purpose.compareTo("exposeService") == 0) {
             processExposeService(object, ac);
         } else if (purpose.compareTo("unexposeService") == 0) {
@@ -213,12 +210,13 @@ public class ProxyMessenger {
         String eventName = object.getString("eventName");
         String eventValue = object.getString("eventValue");
         String serviceId = connection.getExposedService();
+        log.finer("send upd "+eventName+" "+eventValue);
         switch (protocol(serviceId)) {
             case protocolUPNP:
-                uPnPProcessor.UpdateEvent(eventName, eventValue, serviceId);
+                uPnPProcessor.updateEvent(eventName, eventValue, serviceId);
                 break;
             case protocolBonjour:
-                bonjourProcessor.UpdateEvent(eventName, eventValue, serviceId);
+                bonjourProcessor.updateEvent(eventName, eventValue, serviceId);
                 break;
             default:
                 log.info("unknown discovery and communication protocol");
@@ -239,10 +237,10 @@ public class ProxyMessenger {
         String serviceId = object.getString("serviceId");
         switch (protocol(serviceId)) {
             case protocolUPNP:
-                uPnPProcessor.Subscribe(serviceId, eventName, callback, connection);
+                uPnPProcessor.subscribe(serviceId, eventName, callback, connection);
                 break;
             case protocolBonjour:
-                bonjourProcessor.Xscribe(object, serviceId, connection);
+                bonjourProcessor.xscribe(object, serviceId, connection);
                 break;
             default:
                 log.info("unknown discovery and communication protocol");
@@ -262,10 +260,10 @@ public class ProxyMessenger {
         String serviceId = object.getString("serviceId");
         switch (protocol(serviceId)) {
             case protocolUPNP:
-                uPnPProcessor.Unsubscribe(serviceId, eventName);
+                uPnPProcessor.unsubscribe(serviceId, eventName);
                 break;
             case protocolBonjour:
-                bonjourProcessor.Xscribe(object, serviceId, connection);
+                bonjourProcessor.xscribe(object, serviceId, connection);
                 break;
             default:
                 log.info("unknown discovery and communication protocol");
