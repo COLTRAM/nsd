@@ -16,7 +16,13 @@
  */
 "use strict";
 
-define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], function (when, cons, sio) {
+require.config({
+    paths: {
+        socketio: "js/socket.io.js"
+    }
+});
+
+define("NSDPlusPlusSIO", ["when", "monitor/console", "socketio"], function (when, cons, sio) {
     var connectionInterface = null;
     var eventValues = [];
     //noinspection UnnecessaryLocalVariableJS

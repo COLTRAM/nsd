@@ -35,7 +35,6 @@ public class LocalExposedBonjourService implements Runnable {
     private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LocalExposedBonjourService.class.getName());
     private ServiceInfo serviceInfo;
     private String serviceId;
-    private String ColtramServiceId;
     private ServerSocket serverSocket;
     private ArrayList<BonjourServiceListener> listeners = new ArrayList<BonjourServiceListener>();
     private Thread thread;
@@ -50,7 +49,6 @@ public class LocalExposedBonjourService implements Runnable {
         this.serviceInfo = serviceInfo;
         this.serviceId = serviceId;
         this.topManager = topManager;
-        ColtramServiceId = serviceInfo.getKey();
         this.serverSocket = serverSocket;
         services.add(this);
         log.finer("created coltram bonjour service on port " + serverSocket.getLocalPort() + " id:" + serviceId);
@@ -238,13 +236,10 @@ public class LocalExposedBonjourService implements Runnable {
         log.fine("subscribe " + eventName);
         String callback = object.getString("callback");
         String address = object.getString("address");
-        String port = object.getString("port");
         String listenerPort = object.optString("listenerPort");
         String originAtom = object.getString("originAtom");
-        String serviceId = object.getString("serviceId");
         for (EventSubscription cbse : subscriptions) {
             if (eventName.equals(cbse.getEventName()) &&
-                    callback.equals(cbse.getCallback()) &&
                     address.equals(cbse.getAddress()) &&
                     listenerPort.equals(cbse.getListenerPort()) &&
                     originAtom.equals(cbse.getOriginAtom())) {
