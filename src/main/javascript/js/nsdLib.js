@@ -301,7 +301,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     /////////////////////////////////////////////////////
     my.updateEvent = function (eventName, eventValue) {
         // propagate the value to the agent
-        if (eventValues[eventName] && eventValues[eventName] != eventValue) {
+        if (eventValues[eventName] != eventValue) {
             var obj = {};
             obj.purpose = "updateEvent";
             obj.eventName = eventName;
