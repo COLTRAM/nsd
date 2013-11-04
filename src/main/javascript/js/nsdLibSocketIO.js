@@ -17,7 +17,7 @@
 "use strict";
 
 define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], function (when, cons, sio) {
-    var socket = null;
+    var connectionInterface = null;
     var eventValues = [];
     //noinspection UnnecessaryLocalVariableJS
     var discoveredServices = [];
@@ -48,7 +48,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
             throw "testing null service for past discovery";
         }
         for (var i = 0; i < discoveredServices.length; i++) {
-            my.logger("checking "+discoveredServices[i].id+" "+service.id+" - "+(discoveredServices[i].id == service.id));
+            //my.logger("checking "+discoveredServices[i].id+" "+service.id+" - "+(discoveredServices[i].id == service.id));
             if (discoveredServices[i].id == service.id) {
                 return true;
             }
@@ -62,7 +62,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
     my.addDiscoveredService = function (serviceFromJava) {
         //my.logger("addDiscoveredService "+serviceFromJava.id);
         if (serviceFromJava == null) {
-            throw "service received from agent is null";
+            throw new Error("service received from agent is null");
         }
         discoveredServices.push(serviceFromJava);
         // my.logger("discovered: "+serviceFromJava.type);
@@ -125,20 +125,20 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
     my.connect = function (host) {
         my.logger("connecting to " + host);
         try {
-            socket = io.connect(host == null ? "http://localhost:57005/" : "http://" + host + ":57005/");
+            connectionInterface = io.connect(host == null ? "http://localhost:57005/" : "http://" + host + ":57005/");
         } catch (e) {
             my.logger("error creating WebSocket " + e);
             my.logger("cannot continue...");
             return;
         }
-        socket.on('connect', socketConnected);
-        socket.on('connect_failed', function () {my.logger("socket.io connection failed")});
-        socket.on('message', msgHandler);
-        socket.on('disconnect', socketClosed);
+        connectionInterface.on('connect', socketConnected);
+        connectionInterface.on('connect_failed', function () {my.logger("connectionInterface.io connection failed")});
+        connectionInterface.on('message', msgHandler);
+        connectionInterface.on('disconnect', socketClosed);
     };
 
     //
-    // internal: when a socket is connected
+    // internal: when a connectionInterface is connected
     //
     function socketConnected() {
         //
@@ -178,7 +178,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
     };
 
     //
-    // internal: when a socket is closed
+    // internal: when a connectionInterface is closed
     //
     function socketClosed() {
         my.logger("Disconnected");
@@ -229,7 +229,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
         serviceImplementation.service = obj.localService;
         serviceImplementations.push(serviceImplementation);
         obj.serviceImplementation = "" + (serviceImplementations.length - 1);
-        socket.send(JSON.stringify(obj));
+        connectionInterface.send(JSON.stringify(obj));
         return obj.localService.uniqueId;
     };
 
@@ -239,7 +239,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
         obj.purpose = "unexposeService";
         obj.localService = {};
         obj.localService.uniqueId = uniqueId;
-        conn.send(JSON.stringify(obj));
+        connectionInterface.send(JSON.stringify(obj));
     };
 
     //
@@ -306,7 +306,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
             obj.purpose = "updateEvent";
             obj.eventName = eventName;
             obj.eventValue = JSON.stringify(eventValue);
-            conn.send(JSON.stringify(obj));
+            connectionInterface.send(JSON.stringify(obj));
             eventValues[eventName] = eventValue;
         }
     };
@@ -372,13 +372,13 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
                         obj.callback = subscribeCallbacks.push(callback) - 1;
                         var s = JSON.stringify(obj);
                         //my.logger(s);
-                        socket.send(s);
+                        connectionInterface.send(s);
                     } else {
                         //my.logger("event " + eventName + " is not part of the interface of this service");
                         throw new Error("event " + eventName + " is not part of the interface of this service");
                     }
                 }
-            }(service.eventList, serviceId, socket);
+            }(service.eventList, serviceId, connectionInterface);
             proxy.unsubscribe = function (eventList, serviceId, conn) {
                 return function (eventName, callback) {
                     if (eventList.indexOf(eventName) >= 0) {
@@ -388,13 +388,13 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
                         obj.eventName = eventName;
                         var s = JSON.stringify(obj);
                         //my.logger(s);
-                        socket.send(s);
+                        connectionInterface.send(s);
                     } else {
                         //my.logger("event " + eventName + " is not part of the interface of this service");
                         throw new Error("event " + eventName + " is not part of the interface of this service");
                     }
                 }
-            }(service.eventList, serviceId, socket);
+            }(service.eventList, serviceId, connectionInterface);
         } else {
             proxy.subscribe = function () {
                 //my.logger("this service does not have events");
@@ -434,7 +434,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
             var deferred = when.defer();
             obj.replyCallBack = getTokenForDeferred(deferred);
             var s = JSON.stringify(obj);
-            socket.send(s);
+            connectionInterface.send(s);
             return deferred.promise;
         };
     }
@@ -565,7 +565,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "js/socket.io.js"], functio
             answer.serviceId = obj.serviceId;
             answer.actionName = obj.actionName;
         }
-        socket.send(JSON.stringify(answer));
+        connectionInterface.send(JSON.stringify(answer));
     }
 
     //

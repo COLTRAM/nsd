@@ -17,7 +17,7 @@
 "use strict";
 
 define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
-    var conn = null;
+    var connectionInterface = null;
     var eventValues = [];
     //noinspection UnnecessaryLocalVariableJS
     var discoveredServices = [];
@@ -48,7 +48,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
             throw "testing null service for past discovery";
         }
         for (var i = 0; i < discoveredServices.length; i++) {
-            Coltram.logger("checking "+discoveredServices[i].id+" "+service.id+" - "+(discoveredServices[i].id == service.id));
+            //my.logger("checking "+discoveredServices[i].id+" "+service.id+" - "+(discoveredServices[i].id == service.id));
             if (discoveredServices[i].id == service.id) {
                 return true;
             }
@@ -61,7 +61,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     //
     my.addDiscoveredService = function (serviceFromJava) {
         if (serviceFromJava == null) {
-            throw "service received from agent is null";
+            throw new Error("service received from agent is null");
         }
         discoveredServices.push(serviceFromJava);
         // my.logger("discovered: "+serviceFromJava.type);
@@ -94,9 +94,9 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     my.ServiceImplementation = function () {
     };
 
-    //my.nbOfServiceImplementations = function () {
-    //    return serviceImplementations.length;
-    //};
+    my.nbOfServiceImplementations = function () {
+        return serviceImplementations.length;
+    };
 
     my.getImplementation = function (implementationId) {
         //console.log("getImplementation", serviceImplementations, implementationId);
@@ -124,16 +124,16 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     my.connect = function (host) {
         my.logger("connecting to " + host);
         try {
-            conn = new WebSocket(host == null ? "ws://localhost:56797/" : "ws://" + host + ":56797/");
+            connectionInterface = new WebSocket(host == null ? "ws://localhost:56797/" : "ws://" + host + ":56797/");
         } catch (e) {
             my.logger("error creating WebSocket " + e);
             my.logger("cannot continue...");
             return;
         }
-        conn.onopen = socketConnected;
-        conn.onmessage = msgHandler;
-        conn.onclose = socketClosed;
-        conn.onerror = errorFunction;
+        connectionInterface.onopen = socketConnected;
+        connectionInterface.onmessage = msgHandler;
+        connectionInterface.onclose = socketClosed;
+        connectionInterface.onerror = errorFunction;
     };
 
     //
@@ -154,11 +154,12 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
         try {
             // obj = JSON.parse(e.data);
             eval('obj = ' + e.data); // works better on long strings ?
-            //Coltram.logger(e.data);
+            //my.logger(e.data);
         } catch (error) {
             my.logger("+------+");
             my.logger("|" + error + " " + e.data);
             my.logger("+------+");
+            return;
         }
         // my.resetLog();
         // my.logger(obj.purpose+" "+(e.data+"").substr(0, 400));
@@ -205,7 +206,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     //
     my.expose = function (type, protocol, serviceImplementation) {
         if (arguments.length < 3) {
-            throw "my.expose called with not enough parameters";
+            throw new Error("Coltram.expose called with not enough parameters");
         }
         var obj = {};
         obj.purpose = "exposeService";
@@ -229,7 +230,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
         serviceImplementation.service = obj.localService;
         serviceImplementations.push(serviceImplementation);
         obj.serviceImplementation = "" + (serviceImplementations.length - 1);
-        conn.send(JSON.stringify(obj));
+        connectionInterface.send(JSON.stringify(obj));
         return obj.localService.uniqueId;
     };
 
@@ -239,7 +240,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
         obj.purpose = "unexposeService";
         obj.localService = {};
         obj.localService.uniqueId = uniqueId;
-        conn.send(JSON.stringify(obj));
+        connectionInterface.send(JSON.stringify(obj));
     };
 
     //
@@ -306,7 +307,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
             obj.purpose = "updateEvent";
             obj.eventName = eventName;
             obj.eventValue = JSON.stringify(eventValue);
-            conn.send(JSON.stringify(obj));
+            connectionInterface.send(JSON.stringify(obj));
             eventValues[eventName] = eventValue;
         }
     };
@@ -343,9 +344,9 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
             my.logger("service with id " + serviceId + " not found in bindService");
             return null;
         } //else {
-        //Coltram.logger("service "+serviceId);
+        //my.logger("service "+serviceId);
         //for (var i = 0; i < service.eventList.length; i++) {
-        //    Coltram.logger(service.eventList[i]);
+        //    my.logger(service.eventList[i]);
         //}
         //}
         if (service.actionList == null) {
@@ -378,7 +379,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
                         throw new Error("event " + eventName + " is not part of the interface of this service");
                     }
                 }
-            }(service.eventList, serviceId, conn);
+            }(service.eventList, serviceId, connectionInterface);
             proxy.unsubscribe = function (eventList, serviceId, conn) {
                 return function (eventName, callback) {
                     if (eventList.indexOf(eventName) >= 0) {
@@ -394,7 +395,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
                         throw new Error("event " + eventName + " is not part of the interface of this service");
                     }
                 }
-            }(service.eventList, serviceId, conn);
+            }(service.eventList, serviceId, connectionInterface);
         } else {
             proxy.subscribe = function () {
                 //my.logger("this service does not have events");
@@ -434,7 +435,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
             var deferred = when.defer();
             obj.replyCallBack = getTokenForDeferred(deferred);
             var s = JSON.stringify(obj);
-            conn.send(s);
+            connectionInterface.send(s);
             return deferred.promise;
         };
     }
@@ -556,16 +557,16 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
         answer.purpose = 'reply';
         answer["arguments"] = result;
         answer.callBack = obj.replyCallBack;
+        answer.serviceId = obj.serviceId;
+        answer.actionName = obj.actionName;
+        if (obj.hasOwnProperty("originAtom")) {
+            answer.originAtom = obj.originAtom;
+        }
         if (obj.hasOwnProperty("address")) {
             answer.address = obj.address;
             answer.replyPort = obj.replyPort;
-            if (obj.hasOwnProperty("originAtom")) {
-                answer.originAtom = obj.originAtom;
-            }
-            answer.serviceId = obj.serviceId;
-            answer.actionName = obj.actionName;
         }
-        conn.send(JSON.stringify(answer));
+        connectionInterface.send(JSON.stringify(answer));
     }
 
     //
@@ -671,7 +672,7 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     var specificServiceDiscoveredCallbacks = []; //, networkServicesArray = [];
 
     my.getNetworkServices = function (serviceType) {
-        my.logger("getNS " + serviceType);
+        //my.logger("getNS "+serviceType);
         var deferred = when.defer();
         setTimeout(waiter(serviceType, deferred), 1);
         //my.logger("returning from getNS");
@@ -820,10 +821,10 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
                 var newService = newlyDiscoveredServices[i];
                 if (specificServiceDiscoveredCallbacks[cb].compare(newService)) {
                     var networkServices = specificServiceDiscoveredCallbacks[cb].networkServices;
-                    // we know it is a new newService, otherwise it would have been filtered in the caller
+                    // we know it is a new service, otherwise it would have been filtered in the caller
                     networkServices.servicesAvailable++;
                     networkServices.onserviceavailableDeferred.resolve();
-                    // if it is this newService, mark as online and call onserviceonline
+                    // if it is this service, mark as online and call onserviceonline
                     for (var j = 0; j < networkServices.length; j++) {
                         if (networkServices[j].id == newService.id) {
                             networkServices[j].online = true;
@@ -924,12 +925,12 @@ define("NSDPlusPlus", ["when", "monitor/console"], function (when, cons) {
     };
 
     my.addMessageHandler("serviceDiscovered", function (obj) {
-        my.logger("service discovered " + obj.services.length);
+        //my.logger("service discovered " + obj.services.length);
         var i, newServices = [];
         for (i = 0; i < obj.services.length; i++) {
             if (!my.isDiscovered(obj.services[i])) {
                 my.addDiscoveredService(obj.services[i]);
-                my.logger("D:" + obj.services[i].type + " " + obj.services[i].name);
+                //my.logger("D:" + obj.services[i].type + " " + obj.services[i].name);
                 newServices.push(obj.services[i]);
             }
         }
