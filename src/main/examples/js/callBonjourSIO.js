@@ -46,15 +46,16 @@ require(["NSDPlusPlusSIO", "when", "jQuery", "bootstrap"], function (NSDPlusPlus
 
     function CB(services) {
         NSDPlusPlus.logger("CB " + services.length);
-        services.onserviceavailable.then(onserviceavailable);
+        //services.onservicefound.then(onservicefound);
+        services.onservicefound = onservicefound;
         if (services.length > 0) {
             // select first of matching services, only one is supposed to match anyway
             service = NSDPlusPlus.bindService(services[0].id);
         }
     }
 
-    function onserviceavailable() {
-        NSDPlusPlus.logger("onserviceavailable callback");
+    function onservicefound() {
+        NSDPlusPlus.logger("onservicefound callback");
         NSD.getNetworkServices("zeroconf:_communicationtest._tcp.local.").then(CB);
     }
 

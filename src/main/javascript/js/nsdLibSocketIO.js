@@ -783,10 +783,10 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "socketio"], function (when
     NetworkServices.prototype = [];
 
     NetworkServices.prototype.refresh = function () {
-        this.onserviceavailableDeferred = when.defer();
-        this.onserviceavailable = this.onserviceavailableDeferred.promise;
-        this.onserviceunavailableDeferred = when.defer();
-        this.onserviceunavailable = this.onserviceunavailableDeferred.promise;
+        this.onservicefoundDeferred = when.defer();
+        this.onservicefound = this.onservicefoundDeferred.promise;
+        this.onservicelostDeferred = when.defer();
+        this.onservicelost = this.onservicelostDeferred.promise;
         return this;
     };
 
@@ -828,7 +828,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "socketio"], function (when
                     var networkServices = specificServiceDiscoveredCallbacks[cb].networkServices;
                     // we know it is a new newService, otherwise it would have been filtered in the caller
                     networkServices.servicesAvailable++;
-                    networkServices.onserviceavailableDeferred.resolve();
+                    networkServices.onservicefoundDeferred.resolve();
                     // if it is this newService, mark as online and call onserviceonline
                     for (var j = 0; j < networkServices.length; j++) {
                         if (networkServices[j].id == newService.id) {
@@ -855,7 +855,7 @@ define("NSDPlusPlusSIO", ["when", "monitor/console", "socketio"], function (when
                     var networkServices = specificServiceDiscoveredCallbacks[cb].networkServices;
                     // we know it is a removed service, otherwise it would have been filtered in the caller
                     networkServices.servicesAvailable--;
-                    networkServices.onserviceunavailableDeferred.resolve();
+                    networkServices.onservicelostDeferred.resolve();
                     // if it is this service, mark as online=false and call onserviceoffline
                     for (var j = 0; j < networkServices.length; j++) {
                         if (networkServices[j].id == service.id) {

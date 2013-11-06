@@ -54,7 +54,8 @@ require(["NSDPlusPlus", "when", "jQuery", "bootstrap"], function (NSDPlusPlus, w
 
     function CB(services) {
         NSDPlusPlus.logger("CB " + services.length);
-        services.onserviceavailable.then(onserviceavailable);
+        //services.onservicefound.then(onservicefound);
+        services.onservicefound = onservicefound;
         var table = document.getElementById("servicetable");
         empty(table);
         table.appendChild(div("span12 label", "-"));
@@ -78,7 +79,8 @@ require(["NSDPlusPlus", "when", "jQuery", "bootstrap"], function (NSDPlusPlus, w
 
     function CB1(services) {
         NSDPlusPlus.logger("CB1 " + services.length);
-        services.onserviceavailable.then(onserviceavailable);
+        //services.onservicefound.then(onservicefound1);
+        services.onservicefound = onservicefound1;
         var table = document.getElementById("servicetable");
         empty(table);
         table.appendChild(div("span12 label", "-"));
@@ -107,16 +109,16 @@ require(["NSDPlusPlus", "when", "jQuery", "bootstrap"], function (NSDPlusPlus, w
         return div;
     }
 
-    function onserviceavailable() {
-        //NSDPlusPlus.logger("onserviceavailable callback");
+    function onservicefound() {
+        //NSDPlusPlus.logger("onservicefound callback");
         NSD.getNetworkServices(serviceType).then(CB);
-        NSDPlusPlus.logger("in onserviceavailable, called getNetworkServices with " + serviceType);
+        NSDPlusPlus.logger("in onservicefound, called getNetworkServices with " + serviceType);
     }
 
-    function onserviceavailable1() {
-        //NSDPlusPlus.logger("onserviceavailable1 callback");
+    function onservicefound1() {
+        //NSDPlusPlus.logger("onservicefound1 callback");
         NSDPlusPlus.discover(serviceType).then(CB1);
-        NSDPlusPlus.logger("in onserviceavailable1, called discover with " + serviceType);
+        NSDPlusPlus.logger("in onservicefound1, called discover with " + serviceType);
     }
 
     function connectedCB() {
