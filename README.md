@@ -13,7 +13,7 @@ The project structure is compatible with Maven, and a pom.xml is provided.
 ## What's new
 
 Version 2:
-- Latest NSD draft as of Nov 1, 2013, with one modification: onservice[un]available are not callbacks but promises
+- Latest NSD draft as of Nov 1, 2013
 - Many bug fixes
 - Refactoring
 
