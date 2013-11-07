@@ -1,8 +1,6 @@
-# nsd
-
 ##Network Service Discovery API implementation
 
-I have implemented the Network Service Discovery API [http://www.w3.org/TR/discovery-api/] 
+This is an implementation of the Network Service Discovery API [http://www.w3.org/TR/discovery-api/]
 on top of UPnP and Bonjour as a Java proxy for any modern browser, coupled with a JS library. 
 The JS library handles the connection with the Java proxy through WebSocket and JSON messages.
 This has been tested on PCs and Macs, with recent versions of Chrome, Firefox, Safari and Opera. 
@@ -19,7 +17,7 @@ Version 2:
 
 ## Quick start
 
-Run the agent in a terminal with the command line:
+You can run the agent in a terminal with the command line:
 
 	java -jar nsd-websocket-jar-with-dependencies.jar
 
@@ -29,10 +27,13 @@ or
 
 depending on which communication protocol you want to use between the browser and the proxy.
 
-Running the agent in the terminal is necessary if you want to see the error log. 
-Run the agent before you load any of the examples in a browser.
+You have to the agent in the terminal if you want to see the error log.
 
-Place the content of the examples directory in the document root of a web server.
+You need to run the agent before you load any of the examples in a browser.
+
+You need to have access to a web server, and be able to place documents in its document root.
+
+Place the content of the examples directory in the document root of your web server.
 Also place a copy of the js directory in the document root.
 Also place a copy of the content of bootstrap.zip so that your document root looks like:
 
